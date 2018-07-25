@@ -1,0 +1,22 @@
+
+------------------------------------------------------------
+Sample frequency of IMU: [fs] = 100.0 Hz
+Simulation time duration: 1800.0 s
+Simulation runs: 1
+
+------------------------------------------------------------
+Simulation results are saved to E:\testProject\Silmation\demo_saved_data\2018-07-25-11-34-54
+The following results are saved:
+	time: sample time
+	ref_pos: true pos in the navigation frame
+	ref_vel: true vel in the body frame
+	ref_att_euler: true attitude (Euler angles, ZYX)
+	ref_accel: True accel
+	ref_gyro: true angular velocity
+	accel: accel measurements
+	gyro: gyro measurements
+	allan_t: Allan var time
+	ad_accel: Allan deviation of accel
+	ad_gyro: Allan deviation of gyro
+	ref_att_quat: true attitude (quaternion)
+
