@@ -14,7 +14,42 @@ import numpy as np
 from gnss_ins_sim.sim import imu_model
 from gnss_ins_sim.sim import ins_sim
 from azure.storage.blob import ContentSettings,AppendBlobService
+import time
 
+#get http body
+class JSONObject:
+    def __init__(self, d):
+        self.__dict__ = d
+        
+def getHttpMsg():
+    env = os.environ
+    http_method = env['REQ_METHOD'] if 'REQ_METHOD' in env else 'GET'
+
+    if http_method.lower() == 'post':
+        request_body = open(env['req'], "r").read()
+        if 'userId' in request_body:
+            data = json.loads(request_body, object_hook=JSONObject)
+
+            print(data)
+            fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '' + data.userToken
+            data['name'] = fileName
+            write_http_response(200,{'fileName': fileName})
+            #test_allan(data)
+        else :
+            write_http_response(500,{'error': 'no user message'})        
+    else :
+        write_http_response(500,{'error': 'just support post'})        
+#write response 
+def write_http_response(status, body_dict):
+    return_dict = {
+        "status": status,
+        "body": json.dumps(body_dict),
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
+    output = open(os.environ['res'], 'w')
+    output.write(json.dumps(return_dict))
 # globals
 D2R = math.pi/180
 
@@ -64,5 +99,4 @@ def test1():
     append_blob_service.append_blob_from_bytes(container_name='data',blob_name=name,blob=text)
 
 if __name__ == '__main__':
-    #test_allan()
-    test1()
+    getHttpMsg()
