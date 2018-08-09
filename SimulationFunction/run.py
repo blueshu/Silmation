@@ -14,13 +14,13 @@ import numpy as np
 from gnss_ins_sim.sim import imu_model
 from gnss_ins_sim.sim import ins_sim
 from azure.storage.blob import ContentSettings,AppendBlobService
-import time
+import time,json
 
 #get http body
 class JSONObject:
     def __init__(self, d):
         self.__dict__ = d
-        
+
 def getHttpMsg():
     env = os.environ
     http_method = env['REQ_METHOD'] if 'REQ_METHOD' in env else 'GET'
