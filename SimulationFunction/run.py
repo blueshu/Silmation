@@ -29,12 +29,10 @@ def getHttpMsg():
         request_body = open(env['req'], "r").read()
         if 'userId' in request_body:
             data = json.loads(request_body, object_hook=JSONObject)
-
             print(data)
             fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '' + data.userToken
-            data['name'] = fileName
             write_http_response(200,{'fileName': fileName})
-            #test_allan(data)
+            test_allan(data,fileName)
         else :
             write_http_response(500,{'error': 'no user message'})        
     else :
@@ -56,11 +54,13 @@ D2R = math.pi/180
 motion_def_path = os.path.abspath('.//demo_motion_def_files//')
 fs = 100.0          # IMU sample frequency
 
-def test_allan():
+def test_allan(data,fileName):
     '''
     An Allan analysis demo for Sim.
     '''
     #### Customized IMU model parameters, typical for IMU381
+    print data
+    print fileName
     imu_err = {'gyro_b': np.array([0.0, 0.0, 0.0]),
                'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
                'gyro_b_stability': np.array([3.5, 3.5, 3.5]) * 1.0,
@@ -86,12 +86,12 @@ def test_allan():
                       mode=None,
                       env=None,
                       algorithm=algo)
-    sim.run()
+    sim.run('',fileName,data)
     # generate simulation results, summary, and save data to files
-    sim.results('demo',update_flag=True)  # save data files
+    #sim.results('demo',update_flag=True)  # save data files
     # plot data
     #sim.plot(['ad_accel', 'ad_gyro'])
-def test1():
+def pushStatus(data,fileName):
     text = 'status:0,userId:143'
     name = 'test/statue.cvs'
     append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')

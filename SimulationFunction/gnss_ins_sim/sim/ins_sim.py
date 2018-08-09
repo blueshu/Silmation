@@ -133,7 +133,7 @@ class Sim(object):
         # summary
         self.sum = ''
 
-    def run(self, num_times=1):
+    def run(self, num_times=1,fileName,data):
         '''
         run simulation.
         Args:
@@ -142,23 +142,25 @@ class Sim(object):
         self.sim_count = int(num_times)
         if self.sim_count < 1:
             self.sim_count = 1
-
+        self.data = data
+        self.fileName = fileName
+        DataUpload(fileName).update_status()
         #### generate sensor data from file or pathgen
-        self.__gen_data()
+        #self.__gen_data()
 
         #### run algorithms
-        if self.amgr.algo is not None:
+        #if self.amgr.algo is not None:
             # tell data manager the output of the algorithm
-            self.dmgr.set_algo_output(self.amgr.output)
+            #self.dmgr.set_algo_output(self.amgr.output)
             # get algo input data
-            algo_input = self.dmgr.get_data(self.amgr.input)
+            #algo_input = self.dmgr.get_data(self.amgr.input)
             # run the algo and get algo output
-            algo_output = self.amgr.run_algo(algo_input, range(self.sim_count))
+            #algo_output = self.amgr.run_algo(algo_input, range(self.sim_count))
             # add algo output to ins_data_manager
-            for i in range(len(self.amgr.output)):
-                self.dmgr.add_data(self.amgr.output[i], algo_output[i])
+            #for i in range(len(self.amgr.output)):
+                #self.dmgr.add_data(self.amgr.output[i], algo_output[i])
         # simulation complete successfully
-        self.sim_complete = True
+        #self.sim_complete = True
 
     def results(self, data_dir=None, end_point=False, gen_kml=False, update_flag=False):
         '''
@@ -604,7 +606,7 @@ class Sim(object):
             data_dir = os.path.abspath(data_dir)
         if data_dir[-1] != '//':
             data_dir = data_dir + '//'
-        data_dir = data_dir + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '//'
+        data_dir = data_dir + self.fileName + '//'
         data_dir = os.path.abspath(data_dir)
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)

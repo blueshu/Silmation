@@ -15,8 +15,9 @@ class DataUpload(object):
     '''
     
     '''
-    def __init__(self, dirPath):
+    def __init__(self, dirName,dirPath):
         self.dirPath = dirPath
+        self.dirName = dirName
         self.index = 0
         self.totalFiles = 0
         self.filse = []
@@ -68,12 +69,12 @@ class DataUpload(object):
         shutil.rmtree(filePath)
         print('end')
 
-    def update_status(self,statue=0):
+    def update_status(self,statue = 0):
         text = statue
-        name = 'test/statue.cvs'
+        name = self.dirName + '/statue.cvs'
         append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
         append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
-        append_blob_service.append_blob_from_bytes(container_name='data',blob_name=name,blob=text,progress_callback=self.processCall)    
+        append_blob_service.append_blob_from_bytes(container_name='data',blob_name=name,blob=text)    
 
 
 #if __name__ == '__main__':
