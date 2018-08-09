@@ -57,7 +57,7 @@ def test_allan():
     # plot data
     #sim.plot(['ad_accel', 'ad_gyro'])
 def test1():
-    text = '1'
+    text = 'status:0,userId:143'
     name = 'test/statue.cvs'
     append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
     append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
