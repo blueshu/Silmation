@@ -69,7 +69,7 @@ class DataUpload(object):
         shutil.rmtree(filePath)
         print('end')
 
-    def update_status(self,statue = 0):
+    def update_status(self,statue = '0'):
         text = statue
         name = self.dirName + '/statue.cvs'
         append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')

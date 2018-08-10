@@ -113,7 +113,7 @@ class Sim(object):
         self.sim_results = False    # simulation results is generated
         # simulation data manager
         self.dmgr = InsDataMgr(fs, self.ref_frame)
-        self.data_src = motion_def
+        self.data_src = os.path.abspath(motion_def)
         self.data_from_files = False
         # algorithm manager
         self.amgr = InsAlgoMgr(algorithm)
@@ -133,7 +133,7 @@ class Sim(object):
         # summary
         self.sum = ''
 
-    def run(self, num_times=1,fileName,data):
+    def run(self, num_times=1,fileName=None,data=None):
         '''
         run simulation.
         Args:
@@ -144,23 +144,24 @@ class Sim(object):
             self.sim_count = 1
         self.data = data
         self.fileName = fileName
-        DataUpload(fileName).update_status()
+        DataUpload(fileName,'').update_status()
         #### generate sensor data from file or pathgen
         #self.__gen_data()
+        self.__motion_def()
 
         #### run algorithms
-        #if self.amgr.algo is not None:
+        if self.amgr.algo is not None:
             # tell data manager the output of the algorithm
-            #self.dmgr.set_algo_output(self.amgr.output)
+            self.dmgr.set_algo_output(self.amgr.output)
             # get algo input data
-            #algo_input = self.dmgr.get_data(self.amgr.input)
+            algo_input = self.dmgr.get_data(self.amgr.input)
             # run the algo and get algo output
-            #algo_output = self.amgr.run_algo(algo_input, range(self.sim_count))
+            algo_output = self.amgr.run_algo(algo_input, range(self.sim_count))
             # add algo output to ins_data_manager
-            #for i in range(len(self.amgr.output)):
-                #self.dmgr.add_data(self.amgr.output[i], algo_output[i])
+            for i in range(len(self.amgr.output)):
+                self.dmgr.add_data(self.amgr.output[i], algo_output[i])
         # simulation complete successfully
-        #self.sim_complete = True
+        self.sim_complete = True
 
     def results(self, data_dir=None, end_point=False, gen_kml=False, update_flag=False):
         '''
@@ -367,7 +368,7 @@ class Sim(object):
                 data = np.genfromtxt(full_file_name, delimiter=',', skip_header=1)
                 # get data units in file
                 units = self.__get_data_units(full_file_name)
-                # print([data_name, data_key, units])
+                #print([data_name, data_key, units])
                 self.dmgr.add_data(data_name, data, data_key, units)
 
     def __gen_data_from_pathgen(self):
@@ -674,3 +675,81 @@ class Sim(object):
         else:
             raise ValueError('%s is not a dict or numpy array.'% src.name)
 
+    #add by Kevin just for online test
+    def __parse_online_motion(self):
+        '''
+        Get initial pos/vel/att and motion command from a .csv file specified by self.data_src.
+        Returns: a list containing:
+            inis_pos_n: initial position, [Lat Lon Alt], units: rad, rad, m.
+            ini_vel_b: initial velocity in the body frame, units: m/s.
+            ini_att: initial Euler angles, ZYX rotation sequence, units: rad
+            motion_def: motion commands, units: rad, rad/s, m, m/s.
+        '''
+        class JSONObject:
+            def __init__(self, d):
+                self.__dict__ = d
+        try:
+            ini_state = json.loads(self.data.initState, object_hook=JSONObject)
+            waypoints = json.loads(self.data.motionCommand, object_hook=JSONObject)
+        except:
+            raise ValueError('motion definition file must have nine columns \
+                              and at least four rows (two header rows + at least two data rows).')
+        ini_pos_n = ini_state[0:3]
+        ini_pos_n[0] = ini_pos_n[0] * D2R
+        ini_pos_n[1] = ini_pos_n[1] * D2R
+        ini_vel_b = ini_state[3:6]
+        ini_att = ini_state[6:9] * D2R
+        if waypoints.ndim == 1: # if waypoints is of size (n,), change it to (1,n)
+            waypoints = waypoints.reshape((1, len(waypoints)))
+        motion_def = waypoints[:, [0, 1, 2, 3, 4, 5, 6, 7]]
+        # convert deg to rad
+        motion_def[:, 1:4] = motion_def[:, 1:4] * D2R
+        # replace nan with 0.0, doing this to be compatible with older version motion def files.
+        motion_def[np.isnan(motion_def)] = 0.0
+
+        return [np.hstack((ini_pos_n, ini_vel_b, ini_att)), motion_def]
+
+    def __motion_def(self):
+        
+        [ini_pva, motion_def] = self.__parse_online_motion()
+        # output definitions
+        output_def = np.array([[1.0, self.fs[0]], [1.0, self.fs[0]]])
+        if self.imu.gps:
+            output_def[1, 0] = 1.0
+            output_def[1, 1] = self.fs[1]
+        else:
+            output_def[1, 0] = -1.0
+        # sim mode-->vehicle maneuver capability
+        mobility = self.__parse_mode(self.mode)
+
+        # generate reference data and add data to ins_data_manager
+        rtn = pathgen.path_gen(ini_pva, motion_def, output_def, mobility,
+                               self.ref_frame, self.imu.magnetometer)
+        self.dmgr.add_data(self.dmgr.time.name, rtn['nav'][:, 0] / self.fs[0])
+        self.dmgr.add_data(self.dmgr.ref_pos.name, rtn['nav'][:, 1:4])
+        self.dmgr.add_data(self.dmgr.ref_vel.name, rtn['nav'][:, 4:7])
+        self.dmgr.add_data(self.dmgr.ref_att_euler.name, rtn['nav'][:, 7:10])
+        self.dmgr.add_data(self.dmgr.ref_accel.name, rtn['imu'][:, 1:4])
+        self.dmgr.add_data(self.dmgr.ref_gyro.name, rtn['imu'][:, 4:7])
+        if self.imu.gps:
+            self.dmgr.add_data(self.dmgr.gps_time.name, rtn['gps'][:, 0] / self.fs[0])
+            self.dmgr.add_data(self.dmgr.ref_gps.name, rtn['gps'][:, 1:7])
+        if self.imu.magnetometer:
+            self.dmgr.add_data(self.dmgr.ref_mag.name, rtn['mag'][:, 1:4])
+        # generate sensor data
+        # environment-->vibraition params
+        vib_def = self.__parse_env(self.env)
+        for i in range(self.sim_count):
+            accel = pathgen.acc_gen(self.fs[0], self.dmgr.ref_accel.data,
+                                    self.imu.accel_err, vib_def)
+            self.dmgr.add_data(self.dmgr.accel.name, accel, key=i)
+            gyro = pathgen.gyro_gen(self.fs[0], self.dmgr.ref_gyro.data,\
+                                    self.imu.gyro_err)
+            self.dmgr.add_data(self.dmgr.gyro.name, gyro, key=i)
+            if self.imu.gps:
+                gps = pathgen.gps_gen(self.dmgr.ref_gps.data, self.imu.gps_err,\
+                                                   self.ref_frame)
+                self.dmgr.add_data(self.dmgr.gps.name, gps, key=i)
+            if self.imu.magnetometer:
+                mag = pathgen.mag_gen(self.dmgr.ref_mag.data, self.imu.mag_err)
+                self.dmgr.add_data(self.dmgr.mag.name, mag, key=i)
