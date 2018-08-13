@@ -60,7 +60,7 @@ def getHttpMsg():
             test_allan(data,fileName,request_body)
 
         else :
-            write_http_response(500,{'statusCode': '500',error': 'no user message'})        
+            write_http_response(500,{'statusCode': '500','error': 'no user message'})        
     else :
         write_http_response(500,{'statusCode': '500','error': 'just support post'})        
 #write response 
