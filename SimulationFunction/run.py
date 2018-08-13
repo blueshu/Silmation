@@ -46,8 +46,9 @@ def getHttpMsg():
         request_body = open(env['req'], "r").read()
         if 'userId' in request_body:
             data = json.loads(request_body, object_hook=JSONObject)
-            fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + data.userId
+            fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data.userId)
             write_http_response(200,{'fileName': fileName})
+            print '1'
             test_allan(data,fileName,request_body)
         else :
             write_http_response(500,{'error': 'no user message'})        
