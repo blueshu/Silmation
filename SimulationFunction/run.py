@@ -56,7 +56,7 @@ def getHttpMsg():
             t2.start()
             t1.join()
             t2.join()
-            
+
         else :
             write_http_response(500,{'error': 'no user message'})        
     else :
@@ -65,13 +65,14 @@ def getHttpMsg():
 def write_http_response(status, body_dict):
     return_dict = {
         "status": status,
-        "body": json.dumps(body_dict),
+        "body": body_dict,
         "headers": {
             "Content-Type": "application/json"
         }
     }
     output = open(os.environ['res'], 'w')
     output.write(json.dumps(return_dict))
+    print 'back'
     
 # globals
 D2R = math.pi/180
