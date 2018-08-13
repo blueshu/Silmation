@@ -7,7 +7,7 @@ Created on 2018-04-24
 @author: dongxiaoguang
 """
 
-import os
+import os,json
 import time
 import math
 import numpy as np
@@ -144,11 +144,11 @@ class Sim(object):
             self.sim_count = 1
         self.data = data
         self.fileName = fileName
-        DataUpload(fileName,'').update_status()
+        # update status = 1
+        DataUpload(fileName,dirPath='').update_status()
         #### generate sensor data from file or pathgen
         #self.__gen_data()
         self.__motion_def()
-
         #### run algorithms
         if self.amgr.algo is not None:
             # tell data manager the output of the algorithm
@@ -162,6 +162,8 @@ class Sim(object):
                 self.dmgr.add_data(self.amgr.output[i], algo_output[i])
         # simulation complete successfully
         self.sim_complete = True
+        # update status = 1
+        DataUpload(fileName,dirPath='').update_status(1)
 
     def results(self, data_dir=None, end_point=False, gen_kml=False, update_flag=False):
         '''
@@ -204,15 +206,19 @@ class Sim(object):
                     data_dir = self.__check_data_dir(data_dir)
                 self.dmgr.save_kml_files(data_dir)
 
+            # update status = 2
+            DataUpload(self.fileName,dirPath='').update_status(2)
+
             if update_flag is True:
                 if data_dir is not None:
                     self.update_azure(data_dir=data_dir)
             #### simulation summary and save summary to file
-            self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
+            #self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
 
             #### simulation results are generated
             self.sim_results = True
-
+            # update status = 3 end
+            DataUpload(self.fileName,dirPath='').update_status(3)
             #### available data
             return self.dmgr.available
         else:
@@ -224,7 +230,7 @@ class Sim(object):
         if data_dir is None:    # data_dir specified, meaning to save .csv files
                 data_dir = self.__check_data_dir(data_dir)
                 # save data files
-        DataUpload(dirPath=data_dir).begin_update_files()
+        DataUpload(self.fileName,dirPath=data_dir).begin_update_files()
 
     def plot(self, what_to_plot, sim_idx=None, opt=None):
         '''
@@ -337,11 +343,12 @@ class Sim(object):
 
         #### save summary to file
         if data_dir is not None:
-            try:
-                with open(data_dir + '//summary.txt', 'w') as file_summary:
-                    file_summary.write(self.sum + '\n')
-            except:
-                raise IOError('Unable to save summary to %s.'% data_dir)
+            
+
+            with open(os.path.expanduser(data_dir + '//summary.txt'), 'w') as file_summary:
+                file_summary.write(self.sum + '\n')
+            #except:
+                #raise IOError('Unable to save summary to %s.'% data_dir)
 
     def __gen_data(self):
         '''
@@ -688,12 +695,9 @@ class Sim(object):
         class JSONObject:
             def __init__(self, d):
                 self.__dict__ = d
-        try:
-            ini_state = json.loads(self.data.initState, object_hook=JSONObject)
-            waypoints = json.loads(self.data.motionCommand, object_hook=JSONObject)
-        except:
-            raise ValueError('motion definition file must have nine columns \
-                              and at least four rows (two header rows + at least two data rows).')
+
+        ini_state = np.array(json.loads(self.data.initState, object_hook=JSONObject))
+        waypoints = np.array(json.loads(self.data.motionCommand, object_hook=JSONObject))
         ini_pos_n = ini_state[0:3]
         ini_pos_n[0] = ini_pos_n[0] * D2R
         ini_pos_n[1] = ini_pos_n[1] * D2R
