@@ -47,17 +47,17 @@ def getHttpMsg():
         request_body = open(env['req'], "r").read()
         if 'userId' in request_body:
             data = json.loads(request_body, object_hook=JSONObject)
-            fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data.userId)
-            #write_http_response(200,{'fileName': fileName})
-            #
-            t1 = threading.Thread(target=write_http_response, args=(200,{'statusCode': '200','fileName': fileName}))
-            #t2 = threading.Thread(target=test_allan, args=(data,fileName,request_body))
-            t1.start()
-            #t2.start()
-            t1.join()
-            #t2.join()
-            time.sleep(1)
+            #fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data.userId)
+            fileName = data.fileName
+            write_http_response(200,{'fileName': fileName})
             test_allan(data,fileName,request_body)
+            #
+            #t1 = threading.Thread(target=write_http_response, args=(200,{'statusCode': '200','fileName': fileName}))
+            #t2 = threading.Thread(target=test_allan, args=(data,fileName,request_body))
+            #t1.start()
+            #t2.start()
+            #t1.join()
+            #t2.join()
 
         else :
             write_http_response(500,{'statusCode': '500','error': 'no user message'})        
