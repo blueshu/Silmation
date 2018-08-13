@@ -15,6 +15,7 @@ from gnss_ins_sim.sim import imu_model
 from gnss_ins_sim.sim import ins_sim
 from azure.storage.blob import ContentSettings,AppendBlobService
 import time,json
+import threading
 
 #get http body
 class JSONObject:
@@ -47,9 +48,15 @@ def getHttpMsg():
         if 'userId' in request_body:
             data = json.loads(request_body, object_hook=JSONObject)
             fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data.userId)
-            write_http_response(200,{'fileName': fileName})
-            print '1'
-            test_allan(data,fileName,request_body)
+            #write_http_response(200,{'fileName': fileName})
+            #test_allan(data,fileName,request_body)
+            t1 = threading.Thread(target=write_http_response, args=(200,{'fileName': fileName}))
+            t2 = threading.Thread(target=test_allan, args=(data,fileName,request_body))
+            t1.start()
+            t2.start()
+            t1.join()
+            t2.join()
+            
         else :
             write_http_response(500,{'error': 'no user message'})        
     else :
