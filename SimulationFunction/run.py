@@ -96,8 +96,8 @@ def test_allan(data,fileName,request_body):
         imu_err['mag_std'] = np.array([float(magJSON.std[0]), float(magJSON.std[1]), float(magJSON.std[2])]) * 1.0
         if 'si' in data.magJSON:
             imu_err['mag_si'] = np.array([[float(magJSON.si[0]), float(magJSON.si[1]), float(magJSON.si[2])],
-                        #[float(magJSON.si[3]), float(magJSON.si[4]), float(magJSON.si[5])],
-                        #[float(magJSON.si[6]), float(magJSON.si[7]), float(magJSON.si[8])]])
+                [float(magJSON.si[3]), float(magJSON.si[4]), float(magJSON.si[5])],
+                [float(magJSON.si[6]), float(magJSON.si[7]), float(magJSON.si[8])]])
         if 'hi' in data.magJSON:
             imu_err['mag_hi'] = np.array([float(magJSON.hi[0]), float(magJSON.hi[1]), float(magJSON.hi[2])])  
     if 'gpsJSON' in request_body:
