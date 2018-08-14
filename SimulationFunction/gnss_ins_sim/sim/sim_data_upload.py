@@ -72,7 +72,7 @@ class DataUpload(object):
         print('end')
 
     def update_status(self,statue = 0):
-        text = str(statue) + ',' + time.localtime()
+        text = str(statue) + ',' + str(time.localtime())
         name = self.dirName + '/statue.cvs'
         append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
         append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
