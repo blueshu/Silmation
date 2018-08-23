@@ -126,7 +126,8 @@ def test_allan(data,fileName,request_body):
         algo = allan_analysis.Allan()
     elif data.algorithmName == 'FreeIntegration':
         # Free integration in a virtual inertial frame
-        ini_pos_vel_att = np.fromstring(data.algorithmParams, dtype=int, sep=',')
+        ini_pos_vel_att = np.fromstring(data.algorithmParams, dtype=float, sep=',')
+        print ini_pos_vel_att
         ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
         ini_pos_vel_att[1] = ini_pos_vel_att[1] * D2R
         ini_pos_vel_att[6:9] = ini_pos_vel_att[6:9] * D2R
