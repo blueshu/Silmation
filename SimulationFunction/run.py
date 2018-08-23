@@ -120,11 +120,11 @@ def test_allan(data,fileName,request_body):
     imu = imu_model.IMU(accuracy=imu_err, axis=axisNum, gps=False,gps_opt=gpsObj)
 
     
-    if data.name == 'Allan':
+    if data.algorithmName == 'Allan':
         #### Allan analysis algorithm
         from demo_algorithms import allan_analysis
         algo = allan_analysis.Allan()
-    elif data.name == 'FreeIntegration':
+    elif data.algorithmName == 'FreeIntegration':
         # Free integration in a virtual inertial frame
         ini_pos_vel_att = np.fromstring(data.algorithmParams, dtype=int, sep=',')
         ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
