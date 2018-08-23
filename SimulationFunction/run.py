@@ -127,7 +127,6 @@ def test_allan(data,fileName,request_body):
     elif data.algorithmName == 'FreeIntegration':
         # Free integration in a virtual inertial frame
         ini_pos_vel_att = np.fromstring(data.algorithmParams, dtype=float, sep=',')
-        print ini_pos_vel_att
         ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
         ini_pos_vel_att[1] = ini_pos_vel_att[1] * D2R
         ini_pos_vel_att[6:9] = ini_pos_vel_att[6:9] * D2R
@@ -136,6 +135,8 @@ def test_allan(data,fileName,request_body):
         ini_att_err = np.array([0.0, 0.0, 0.0]) # initial Euler angles error, deg
         ini_pos_vel_att[3:6] += ini_vel_err
         ini_pos_vel_att[6:9] += ini_att_err * D2R
+
+        print ini_pos_vel_att
         from demo_algorithms import free_integration
         algo = free_integration.FreeIntegration(ini_pos_vel_att)
         print data.algorithmRunTimes
