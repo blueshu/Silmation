@@ -124,6 +124,21 @@ def test_allan(data,fileName,request_body):
         #### Allan analysis algorithm
         from demo_algorithms import allan_analysis
         algo = allan_analysis.Allan()
+        #### start simulation
+        sim = ins_sim.Sim([fs, 0.0, 0.0],
+                          motion_def_path+"//motion_def-Allan.csv",
+                          ref_frame=data.ref_frame,
+                          imu=imu,
+                          mode=None,
+                          env=None,
+                          algorithm=algo)
+        sim.run(1,fileName,data)
+        # generate simulation results, summary, and save data to files
+        sim.results('demo',update_flag=True)  # save data files
+        # plot data
+        #sim.plot(['ad_accel', 'ad_gyro'])
+
+
     elif data.algorithmName == 'FreeIntegration':
         # Free integration in a virtual inertial frame
         ini_pos_vel_att = np.fromstring(data.algorithmParams, dtype=float, sep=',')
@@ -139,23 +154,19 @@ def test_allan(data,fileName,request_body):
         print ini_pos_vel_att
         from demo_algorithms import free_integration
         algo = free_integration.FreeIntegration(ini_pos_vel_att)
-        print data.algorithmRunTimes
-        print data.algorithmStatistics == 'end_point'
-
-
-    #### start simulation
-    #sim = ins_sim.Sim([fs, 0.0, 0.0],
-    #                  motion_def_path+"//motion_def-Allan.csv",
-    #                  ref_frame=data.ref_frame,
-    #                  imu=imu,
-    #                  mode=None,
-    #                  env=None,
-    #                  algorithm=algo)
-    #sim.run(1,fileName,data)
-    # generate simulation results, summary, and save data to files
-    #sim.results('demo',update_flag=True)  # save data files
-    # plot data
-    #sim.plot(['ad_accel', 'ad_gyro'])
+        staticsFlag = data.algorithmStatistics == 'end-point' 
+        sim = ins_sim.Sim([fs, 0.0, 0.0],
+                      motion_def_path+"//motion_def-90deg_turn.csv",
+                      ref_frame=1,
+                      imu=imu,
+                      mode=None,
+                      env=None,
+                      algorithm=algo)
+        # run the simulation for 1000 times
+        sim.run(data.algorithmRunTimes)
+        # generate simulation results, summary
+        # do not save data since the simulation runs for 1000 times and generates too many results
+        sim.results(end_point=staticsFlag,update_flag=True)
 
 if __name__ == '__main__':
     getHttpMsg()
