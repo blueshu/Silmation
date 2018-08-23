@@ -163,7 +163,7 @@ def test_allan(data,fileName,request_body):
                       env=None,
                       algorithm=algo)
         # run the simulation for 1000 times
-        sim.run(data.algorithmRunTimes)
+        sim.run(data.algorithmRunTimes,fileName,data)
         # generate simulation results, summary
         # do not save data since the simulation runs for 1000 times and generates too many results
         sim.results(end_point=staticsFlag,update_flag=True)
