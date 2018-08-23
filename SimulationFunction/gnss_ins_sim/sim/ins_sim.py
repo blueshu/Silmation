@@ -139,6 +139,7 @@ class Sim(object):
         Args:
             num_times: run the simulation for num_times times with given IMU error model.
         '''
+        print num_times
         self.sim_count = int(num_times)
         if self.sim_count < 1:
             self.sim_count = 1
