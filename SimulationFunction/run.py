@@ -166,7 +166,7 @@ def test_allan(data,fileName,request_body):
         sim.run(data.algorithmRunTimes,fileName,data)
         # generate simulation results, summary
         # do not save data since the simulation runs for 1000 times and generates too many results
-        sim.results(end_point=staticsFlag,update_flag=True)
+        sim.results('demo',end_point=staticsFlag,update_flag=True)
 
 if __name__ == '__main__':
     getHttpMsg()
