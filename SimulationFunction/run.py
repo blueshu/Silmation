@@ -119,21 +119,39 @@ def test_allan(data,fileName,request_body):
     # do not generate GPS and magnetometer data
     imu = imu_model.IMU(accuracy=imu_err, axis=axisNum, gps=False,gps_opt=gpsObj)
 
-    #### Allan analysis algorithm
-    from demo_algorithms import allan_analysis
-    algo = allan_analysis.Allan()
+    
+    if data.name == 'Allan':
+        #### Allan analysis algorithm
+        from demo_algorithms import allan_analysis
+        algo = allan_analysis.Allan()
+    elif data.name == 'FreeIntegration':
+        # Free integration in a virtual inertial frame
+        ini_pos_vel_att = np.fromstring(data.algorithmParams, dtype=int, sep=',')
+        ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
+        ini_pos_vel_att[1] = ini_pos_vel_att[1] * D2R
+        ini_pos_vel_att[6:9] = ini_pos_vel_att[6:9] * D2R
+        # add initial states error if needed
+        ini_vel_err = np.array([0.0, 0.0, 0.0]) # initial velocity error in the body frame, m/s
+        ini_att_err = np.array([0.0, 0.0, 0.0]) # initial Euler angles error, deg
+        ini_pos_vel_att[3:6] += ini_vel_err
+        ini_pos_vel_att[6:9] += ini_att_err * D2R
+        from demo_algorithms import free_integration
+        algo = free_integration.FreeIntegration(ini_pos_vel_att)
+        print data.algorithmRunTimes
+        print data.algorithmStatistics == 'end_point'
+
 
     #### start simulation
-    sim = ins_sim.Sim([fs, 0.0, 0.0],
-                      motion_def_path+"//motion_def-Allan.csv",
-                      ref_frame=data.ref_frame,
-                      imu=imu,
-                      mode=None,
-                      env=None,
-                      algorithm=algo)
-    sim.run(1,fileName,data)
+    #sim = ins_sim.Sim([fs, 0.0, 0.0],
+    #                  motion_def_path+"//motion_def-Allan.csv",
+    #                  ref_frame=data.ref_frame,
+    #                  imu=imu,
+    #                  mode=None,
+    #                  env=None,
+    #                  algorithm=algo)
+    #sim.run(1,fileName,data)
     # generate simulation results, summary, and save data to files
-    sim.results('demo',update_flag=True)  # save data files
+    #sim.results('demo',update_flag=True)  # save data files
     # plot data
     #sim.plot(['ad_accel', 'ad_gyro'])
 

@@ -29,13 +29,11 @@ class DataUpload(object):
         filse = []
         filesName = self.dirPath
         filesName = os.path.abspath(os.path.join(os.path.dirname( __file__ ), filesName))
-        print(filesName)
         for root, dirs, files in os.walk(filesName):
             print(files)
             for name in files:
-                if(name.endswith(".csv")):
-                    n += 1
-                    filse.append(name)
+                n += 1
+                filse.append(name)
         self.totalFiles = n
         self.filse = filse
 
@@ -59,8 +57,6 @@ class DataUpload(object):
             text = f.read()
             f.close()
             name = self.dirName + '/' + fileName
-            append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
-            append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
             append_blob_service.append_blob_from_bytes(container_name='data',blob_name=name,blob=text,progress_callback=self.processCall)
 
         except Exception as e:
@@ -71,9 +67,9 @@ class DataUpload(object):
         shutil.rmtree(filePath)
         print('end')
 
-    def update_status(self,statue = 0):
-        text = str(statue) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-        name = self.dirName + '/statue.cvs'
+    def update_status(self,status = 0):
+        text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+        name = self.dirName + '/status.cvs'
         append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
         append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
         append_blob_service.append_blob_from_bytes(container_name='data',blob_name=name,blob=text)    
