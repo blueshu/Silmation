@@ -49,7 +49,7 @@ def getHttpMsg():
             data = json.loads(request_body, object_hook=JSONObject)
             #fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data.userId)
             fileName = data.fileName
-            write_http_response(200,{fileName': fileName})
+            write_http_response(200,{'fileName': fileName})
             test_allan(data,fileName,request_body)
             #
             #t1 = threading.Thread(target=write_http_response, args=(200,{'statusCode': '200','fileName': fileName}))
