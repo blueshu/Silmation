@@ -16,6 +16,7 @@ from gnss_ins_sim.sim import ins_sim
 from azure.storage.blob import ContentSettings,AppendBlobService
 import time,json
 import threading
+import shutil
 
 #get http body
 class JSONObject:
@@ -177,6 +178,11 @@ def test_allan(data,fileName,request_body):
         sim.results('demo',end_point=staticsFlag,update_flag=True)
 
     print int((time.time() - times)*1000)
+
+def deleteSaveDateFils():
+    filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ),'.//demo_saved_data'))
+    print filePath
+    shutil.rmtree(filePath)
 
 if __name__ == '__main__':
     getHttpMsg()
