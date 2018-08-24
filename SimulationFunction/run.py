@@ -179,4 +179,4 @@ def test_allan(data,fileName,request_body):
     print int((time.time() - times)*1000)
 
 if __name__ == '__main__':
-    localTest()
+    getHttpMsg()
