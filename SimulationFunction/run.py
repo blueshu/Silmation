@@ -160,7 +160,6 @@ def test_allan(data,fileName,request_body):
         #ini_pos_vel_att[3:6] += ini_vel_err
         #ini_pos_vel_att[6:9] += ini_att_err * D2R
 
-        print ini_pos_vel_att
         from demo_algorithms import free_integration
         algo = free_integration.FreeIntegration(ini_pos_vel_att)
         staticsFlag = data.algorithmStatistics == 'end-point' 
@@ -180,4 +179,4 @@ def test_allan(data,fileName,request_body):
     print int((time.time() - times)*1000)
 
 if __name__ == '__main__':
-    getHttpMsg()
+    localTest()

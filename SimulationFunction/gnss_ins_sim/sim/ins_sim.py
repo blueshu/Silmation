@@ -139,7 +139,6 @@ class Sim(object):
         Args:
             num_times: run the simulation for num_times times with given IMU error model.
         '''
-        print num_times
         self.sim_count = int(num_times)
         if self.sim_count < 1:
             self.sim_count = 1
@@ -209,12 +208,12 @@ class Sim(object):
 
             # update status = 2
             DataUpload(self.fileName,dirPath='').update_status(2)
-
+            #### simulation summary and save summary to file
+            self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
             if update_flag is True:
                 if data_dir is not None:
                     self.update_azure(data_dir=data_dir)
-            #### simulation summary and save summary to file
-            self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
+            
 
             #### simulation results are generated
             self.sim_results = True
