@@ -25,12 +25,18 @@ def localTest():
     data = {
         'accelJSON': '{"b":["0.0e-3","0.0e-3","0.0e-3"],"b_drift":["5.0e-5","5.0e-5","5.0e-5"],"b_corr":["100.0","100.0","100.0"],"vrw":[0.03,0.03,0.03]}',
         'gpsJSON': '{"stdp":["5.0","5.0","7.0"],"stdv":[0.05,0.05,0.05]}',
-        'initState': '[32,120,10,0,0,0,0,0,0]',
+        'initState': '[32,120,0,10,0,0,90,0,0]',
         'magJSON': '{"std":[0.01,0.01,0.01]}',
-        'motionCommand': '[[1,0,0,0,0,0,0,18,0],[1,0,0,0,0,0,0,10,0]]',
+        'motionCommand': '[[1,0,0,0,0,0,0,1,0],[1,-15,0,0,0,0,0,6,0],[1,0,0,0,0,0,0,3,0]]',
+        #'motionCommand': '[[1,0,0,0,0,0,0,2000,0]]',
         'rateJSON': '{"b":["0.0","0.0","0.0"],"b_drift":[3.5,3.5,3.5],"b_corr":["100.0","100.0","100.0"],"arw":[0.25,0.25,0.25]}',
         'ref_frame': 1,
         'userId': 143,
+        #'algorithmName': 'Allan',
+        'algorithmName': 'FreeIntegration',
+        'algorithmRunTimes': 1000,
+        'algorithmParams': '0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0',
+        'algorithmStatistics': 'end-point',
         'userToken': 'giLbw9K01VBA9GAQsdSxpStrjTSPXRilNMdsPYFFaZDkQjkZYTdOQ5TB208pt5pU'
     }
     res = json.dumps(data)
@@ -82,6 +88,8 @@ motion_def_path = './/SimulationFunction//demo_motion_def_files//'
 fs = 100.0          # IMU sample frequency
 
 def test_allan(data,fileName,request_body):
+    times = time.time()
+
     '''
     An Allan analysis demo for Sim.
     '''
@@ -143,14 +151,14 @@ def test_allan(data,fileName,request_body):
     elif data.algorithmName == 'FreeIntegration':
         # Free integration in a virtual inertial frame
         ini_pos_vel_att = np.fromstring(data.algorithmParams, dtype=float, sep=',')
-        ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
-        ini_pos_vel_att[1] = ini_pos_vel_att[1] * D2R
-        ini_pos_vel_att[6:9] = ini_pos_vel_att[6:9] * D2R
+        #ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
+        #ini_pos_vel_att[1] = ini_pos_vel_att[1] * D2R
+        #ini_pos_vel_att[6:9] = ini_pos_vel_att[6:9] * D2R
         # add initial states error if needed
-        ini_vel_err = np.array([0.0, 0.0, 0.0]) # initial velocity error in the body frame, m/s
-        ini_att_err = np.array([0.0, 0.0, 0.0]) # initial Euler angles error, deg
-        ini_pos_vel_att[3:6] += ini_vel_err
-        ini_pos_vel_att[6:9] += ini_att_err * D2R
+        #ini_vel_err = np.array([0.0, 0.0, 0.0]) # initial velocity error in the body frame, m/s
+        #ini_att_err = np.array([0.0, 0.0, 0.0]) # initial Euler angles error, deg
+        #ini_pos_vel_att[3:6] += ini_vel_err
+        #ini_pos_vel_att[6:9] += ini_att_err * D2R
 
         print ini_pos_vel_att
         from demo_algorithms import free_integration
@@ -168,6 +176,8 @@ def test_allan(data,fileName,request_body):
         # generate simulation results, summary
         # do not save data since the simulation runs for 1000 times and generates too many results
         sim.results('demo',end_point=staticsFlag,update_flag=True)
+
+    print int((time.time() - times)*1000)
 
 if __name__ == '__main__':
     getHttpMsg()

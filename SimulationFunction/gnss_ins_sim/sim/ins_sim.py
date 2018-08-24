@@ -214,7 +214,7 @@ class Sim(object):
                 if data_dir is not None:
                     self.update_azure(data_dir=data_dir)
             #### simulation summary and save summary to file
-            #self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
+            self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
 
             #### simulation results are generated
             self.sim_results = True
