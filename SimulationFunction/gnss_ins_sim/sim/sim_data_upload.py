@@ -89,7 +89,7 @@ class DataUpload(object):
 
     def update_status(self,status = 0,dataFiles=None):
         if dataFiles is not None:
-            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'&,&'.join(dataFiles)
+            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'&,&'+'&,&'.join(dataFiles)
         else:
             text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
         name = self.dirName + '/status.cvs'
