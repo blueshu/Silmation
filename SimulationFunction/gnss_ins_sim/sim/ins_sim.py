@@ -218,7 +218,7 @@ class Sim(object):
             #### simulation results are generated
             self.sim_results = True
             # update status = 3 end
-            DataUpload(self.fileName,dirPath='').update_status(3)
+            DataUpload(self.fileName,dirPath='').update_status(3,dataFiles=data_saved)
             #### available data
             return self.dmgr.available
         else:

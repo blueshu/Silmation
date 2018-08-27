@@ -21,7 +21,6 @@ class DataUpload(object):
         self.dirName = dirName
         self.index = 0
         self.totalFiles = 0
-        self.files = []
         #self.readFils()
 
     def readFils1(self):
@@ -41,8 +40,6 @@ class DataUpload(object):
         filesName = os.path.abspath(os.path.join(os.path.dirname( __file__ ), filesName))
         for root, dirs, files in os.walk(filesName):
             self.totalFiles = len(files)
-            self.files = files
-            print files
             for name in files:
                 self.update_files(name)
 
@@ -90,8 +87,11 @@ class DataUpload(object):
         shutil.rmtree(filePath)
         print('end')
 
-    def update_status(self,status = 0):
-        text = str(status) + '\n' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'\n'+'&,&'.join(self.files)
+    def update_status(self,status = 0,dataFiles=None):
+        if dataFiles is not None:
+            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'&,&'.join(dataFiles)
+        else:
+            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
         name = self.dirName + '/status.cvs'
         append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
         append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
