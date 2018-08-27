@@ -297,12 +297,12 @@ class Sim(object):
         self.sum += 'Simulation runs: ' + str(self.sim_count) + '\n'
 
         #### save data
-        if data_dir is not None:
-            self.sum += '\n------------------------------------------------------------\n'
-            self.sum += 'Simulation results are saved to ' + data_dir + '\n'
-            self.sum += 'The following results are saved:\n'
-            for i in data_saved:
-                self.sum += '\t' + i  + ': ' + self.dmgr.get_data_all(i).description + '\n'
+        #if data_dir is not None:
+            #self.sum += '\n------------------------------------------------------------\n'
+            #self.sum += 'Simulation results are saved to ' + data_dir + '\n'
+            #self.sum += 'The following results are saved:\n'
+            #for i in data_saved:
+                #self.sum += '\t' + i  + ': ' + self.dmgr.get_data_all(i).description + '\n'
 
         #### error statistics of algorithm output
         err_stat_header_line = False
