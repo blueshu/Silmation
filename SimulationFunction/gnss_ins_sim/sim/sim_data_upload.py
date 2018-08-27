@@ -21,7 +21,7 @@ class DataUpload(object):
         self.dirName = dirName
         self.index = 0
         self.totalFiles = 0
-        self.filse = []
+        self.files = []
         #self.readFils()
 
     def readFils1(self):
