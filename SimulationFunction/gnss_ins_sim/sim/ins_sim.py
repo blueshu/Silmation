@@ -343,8 +343,6 @@ class Sim(object):
 
         #### save summary to file
         if data_dir is not None:
-            
-
             with open(os.path.expanduser(data_dir + '//summary.txt'), 'w') as file_summary:
                 file_summary.write(self.sum + '\n')
             #except:
