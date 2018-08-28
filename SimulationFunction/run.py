@@ -188,3 +188,4 @@ def deleteSaveDateFils():
 
 if __name__ == '__main__':
     getHttpMsg()
+    #localTest()
