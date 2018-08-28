@@ -141,7 +141,9 @@ def test_allan(data,fileName,request_body):
                           imu=imu,
                           mode=None,
                           env=None,
-                          algorithm=algo)
+                          algorithm=algo,
+                          fileName = fileName
+                          )
         sim.run(1,fileName,data)
         # generate simulation results, summary, and save data to files
         sim.results('demo',update_flag=True)  # save data files

@@ -16,34 +16,23 @@ class DataUpload(object):
     '''
     
     '''
-    def __init__(self, dirName,dirPath):
-        self.dirPath = dirPath
-        self.dirName = dirName
+    def __init__(self, folderName):
+        #upload in az function folder
+        self.folderName = folderName 
         self.index = 0
         self.totalFiles = 0
-        #self.readFils()
-
-    def readFils1(self):
-        n = 0
-        files = []
-        filesName = self.dirPath
-        filesName = os.path.abspath(os.path.join(os.path.dirname( __file__ ), filesName))
-        for root, dirs, files in os.walk(filesName):
-            for name in files:
-                n += 1
-                filse.append(name)
-        self.totalFiles = n
-        self.files = files
+        self.files = None #for save output files
 
     def readFils(self):
-        filesName = self.dirPath
-        filesName = os.path.abspath(os.path.join(os.path.dirname( __file__ ), filesName))
-        for root, dirs, files in os.walk(filesName):
+        pathName = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath))
+        for root, dirs, files in os.walk(pathName):
+            self.files = files
             self.totalFiles = len(files)
             for name in files:
                 self.update_files(name)
 
-    def begin_update_files(self):
+    def begin_update_files(self,dirPath):
+        self.dirPath = dirPath
         self.readFils()
         #if self.totalFiles > 0:
             #self.update_files()
@@ -55,27 +44,13 @@ class DataUpload(object):
             else: 
                 self.clear_files()
 
-    def update_files1(self):
-        try:
-            fileName = self.filse[self.index]
-            filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath + '/' + fileName))
-            f = open(filePath, 'r')
-            text = f.read()
-            f.close()
-            name = self.dirName + '/' + fileName
-            append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
-            append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
-            append_blob_service.append_blob_from_bytes(container_name='data',blob_name=name,blob=text,progress_callback=self.processCall)
-        except Exception as e:
-            print(e)
-
     def update_files(self,fileName):
         try:
             filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath + '/' + fileName))
             f = open(filePath, 'r')
             text = f.read()
             f.close()
-            name = self.dirName + '/' + fileName
+            name = self.dirPath + '/' + fileName
             append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
             append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
             append_blob_service.append_blob_from_bytes(container_name='data',blob_name=name,blob=text,progress_callback=self.processCall)
@@ -85,14 +60,14 @@ class DataUpload(object):
     def clear_files(self):
         filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath))
         shutil.rmtree(filePath)
-        print('end')
+        print('finished')
 
     def update_status(self,status = 0,dataFiles=None):
-        if dataFiles is not None:
-            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'&,&'+'&,&'.join(dataFiles)
+        if self.files is not None:
+            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'&,&'+'&,&'.join(self.files)
         else:
             text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-        name = self.dirName + '/status.cvs'
+        name = self.folderName + '/status.cvs'
         append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
         append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
         append_blob_service.append_blob_from_bytes(container_name='data',blob_name=name,blob=text)    

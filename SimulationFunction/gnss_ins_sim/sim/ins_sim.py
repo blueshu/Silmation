@@ -27,7 +27,7 @@ class Sim(object):
     INS simulation engine.
     '''
     def __init__(self, fs, motion_def, ref_frame=0, imu=None,\
-                 mode=None, env=None, algorithm=None):
+                 mode=None, env=None, algorithm=None,fileName=None):
         '''
         Args:
             fs: [fs_imu, fs_gps, fs_mag], Hz.
@@ -117,6 +117,7 @@ class Sim(object):
         self.data_from_files = False
         # algorithm manager
         self.amgr = InsAlgoMgr(algorithm)
+        self.azDataUpload = DataUpload(fileName)
 
         # associated data mapping
         self.data_map = {\
@@ -145,7 +146,7 @@ class Sim(object):
         self.data = data
         self.fileName = fileName
         # update status = 1
-        DataUpload(fileName,dirPath='').update_status()
+        self.azDataUpload.update_status()
         #### generate sensor data from file or pathgen
         #self.__gen_data()
         self.__motion_def()
@@ -163,7 +164,7 @@ class Sim(object):
         # simulation complete successfully
         self.sim_complete = True
         # update status = 1
-        DataUpload(fileName,dirPath='').update_status(1)
+        self.azDataUpload.update_status(1)
 
     def results(self, data_dir=None, end_point=False, gen_kml=False, update_flag=False):
         '''
@@ -207,7 +208,7 @@ class Sim(object):
                 self.dmgr.save_kml_files(data_dir)
 
             # update status = 2
-            DataUpload(self.fileName,dirPath='').update_status(2)
+            self.azDataUpload.update_status(2)
             #### simulation summary and save summary to file
             self.__summary(data_dir, data_saved, end_point=end_point)  # generate summary
             if update_flag is True:
@@ -218,7 +219,7 @@ class Sim(object):
             #### simulation results are generated
             self.sim_results = True
             # update status = 3 end
-            DataUpload(self.fileName,dirPath='').update_status(3,dataFiles=data_saved)
+            self.azDataUpload.update_status(3)
             #### available data
             return self.dmgr.available
         else:
@@ -230,7 +231,7 @@ class Sim(object):
         if data_dir is None:    # data_dir specified, meaning to save .csv files
                 data_dir = self.__check_data_dir(data_dir)
                 # save data files
-        DataUpload(self.fileName,dirPath=data_dir).begin_update_files()
+        self.azDataUpload.begin_update_files(data_dir)
 
     def plot(self, what_to_plot, sim_idx=None, opt=None):
         '''
@@ -284,7 +285,7 @@ class Sim(object):
         Summary of sim results.
         '''
         #### simulation config
-        self.sum += '\n------------------------------------------------------------\n'
+        #self.sum += '\n------------------------------------------------------------\n'
         # sample frequency
         self.sum += self.dmgr.fs.description + ': [' +\
                     self.dmgr.fs.name + '] = ' +\
