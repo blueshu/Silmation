@@ -28,13 +28,13 @@ def localTest():
         'gpsJSON': '{"stdp":["5.0","5.0","7.0"],"stdv":[0.05,0.05,0.05]}',
         'initState': '[32,120,0,10,0,0,90,0,0]',
         'magJSON': '{"std":[0.01,0.01,0.01]}',
-        'motionCommand': '[[1,0,0,0,0,0,0,1,0],[1,-15,0,0,0,0,0,6,0],[1,0,0,0,0,0,0,3,0]]',
-        #'motionCommand': '[[1,0,0,0,0,0,0,2000,0]]',
+        #'motionCommand': '[[1,0,0,0,0,0,0,1,0],[1,-15,0,0,0,0,0,6,0],[1,0,0,0,0,0,0,3,0]]',
+        'motionCommand': '[[1,0,0,0,0,0,0,200,0]]',
         'rateJSON': '{"b":["0.0","0.0","0.0"],"b_drift":[3.5,3.5,3.5],"b_corr":["100.0","100.0","100.0"],"arw":[0.25,0.25,0.25]}',
         'ref_frame': 1,
         'userId': 143,
-        #'algorithmName': 'Allan',
-        'algorithmName': 'FreeIntegration',
+        'algorithmName': 'Allan',
+        #'algorithmName': 'FreeIntegration',
         'algorithmRunTimes': 1000,
         'algorithmParams': '0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0',
         'algorithmStatistics': 'end-point',
@@ -187,4 +187,4 @@ def deleteSaveDateFils():
     shutil.rmtree(filePath)
 
 if __name__ == '__main__':
-    getHttpMsg()
+    localTest()
