@@ -90,7 +90,6 @@ fs = 100.0          # IMU sample frequency
 
 def test_allan(data,fileName,request_body):
     times = time.time()
-
     '''
     An Allan analysis demo for Sim.
     '''
@@ -172,13 +171,32 @@ def test_allan(data,fileName,request_body):
                       imu=imu,
                       mode=None,
                       env=None,
-                      algorithm=algo)
+                      algorithm=algo,
+                      fileName = fileName
+                      )
         # run the simulation for 1000 times
         sim.run(data.algorithmRunTimes,fileName,data)
         # generate simulation results, summary
         # do not save data since the simulation runs for 1000 times and generates too many results
         sim.results('demo',end_point=staticsFlag,update_flag=True)
+    
+    elif data.algorithmName == 'Dmu380':
 
+        from demo_algorithms import dmu380_sim
+        cfg_file = os.path.abspath('.//demo_algorithms//dmu380_sim_lib//ekfSim_tilt.cfg')
+        algo = dmu380_sim.DMU380Sim(cfg_file)
+        sim = ins_sim.Sim([fs, 0.0, fs],
+                        #   motion_def_path+"//motion_def-static.csv",
+                        "//mnt//share//jd_figure8.csv",
+                        ref_frame=1,
+                        imu=imu,
+                        mode=None,
+                        env=None,#'[0.1 0.01 0.11]g-random',
+                        algorithm=algo,
+                        fileName = fileName)
+        sim.run(1)
+        # generate simulation results, summary, and save data to files
+        sim.results('aa')  # do not save data
     print int((time.time() - times)*1000)
 
 def deleteSaveDateFils():
@@ -186,40 +204,6 @@ def deleteSaveDateFils():
     print filePath
     shutil.rmtree(filePath)
 
-def testDmu380():
-    imu_err = {'gyro_b': np.array([1.0, -1.0, 0.5]) * 1.0,
-               'gyro_arw': np.array([0.25, 0.25, 0.25]) * 1.0,
-               'gyro_b_stability': np.array([3.5, 3.5, 3.5]) * 1.0,
-               'gyro_b_corr': np.array([100.0, 100.0, 100.0]),
-               'accel_b': np.array([50.0e-3, 50.0e-3, 50.0e-3]),
-               'accel_vrw': np.array([0.03119, 0.03009, 0.04779]) * 1.0,
-               'accel_b_stability': np.array([4.29e-5, 5.72e-5, 8.02e-5]) * 1.0,
-               'accel_b_corr': np.array([200.0, 200.0, 200.0]),
-               'mag_std': np.array([0.2, 0.2, 0.2]) * 1.0
-              }
-    # do not generate GPS and magnetometer data
-    imu = imu_model.IMU(accuracy=imu_err, axis=9, gps=False)
-
-    #### Algorithm
-    # DMU380 algorithm
-    from demo_algorithms import dmu380_sim
-    cfg_file = os.path.abspath('.//demo_algorithms//dmu380_sim_lib//ekfSim_tilt.cfg')
-    algo = dmu380_sim.DMU380Sim(cfg_file)
-    fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-143'
-    #### start simulation
-    sim = ins_sim.Sim([fs, 0.0, fs],
-                    #   motion_def_path+"//motion_def-static.csv",
-                      "//mnt//share//jd_figure8.csv",
-                      ref_frame=1,
-                      imu=imu,
-                      mode=None,
-                      env=None,#'[0.1 0.01 0.11]g-random',
-                      algorithm=algo,
-                      fileName = fileName)
-    sim.run(1)
-    # generate simulation results, summary, and save data to files
-    sim.results('aa')  # do not save data
-
 if __name__ == '__main__':
     #getHttpMsg()
-    testDmu380()
+    localTest()
