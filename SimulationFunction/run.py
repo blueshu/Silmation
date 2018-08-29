@@ -33,9 +33,9 @@ def localTest():
         'rateJSON': '{"b":["0.0","0.0","0.0"],"b_drift":[3.5,3.5,3.5],"b_corr":["100.0","100.0","100.0"],"arw":[0.25,0.25,0.25]}',
         'ref_frame': 1,
         'userId': 143,
-        'algorithmName': 'Allan',
+        'algorithmName': 'Dmu380',
         #'algorithmName': 'FreeIntegration',
-        'algorithmRunTimes': 1000,
+        'algorithmRunTimes': 1,
         'algorithmParams': '0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0',
         'algorithmStatistics': 'end-point',
         'userToken': 'giLbw9K01VBA9GAQsdSxpStrjTSPXRilNMdsPYFFaZDkQjkZYTdOQ5TB208pt5pU'
