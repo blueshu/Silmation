@@ -205,7 +205,7 @@ def testDmu380():
     from demo_algorithms import dmu380_sim
     cfg_file = os.path.abspath('.//demo_algorithms//dmu380_sim_lib//ekfSim_tilt.cfg')
     algo = dmu380_sim.DMU380Sim(cfg_file)
-    fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data1.userId)
+    fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-143'
     #### start simulation
     sim = ins_sim.Sim([fs, 0.0, fs],
                     #   motion_def_path+"//motion_def-static.csv",
