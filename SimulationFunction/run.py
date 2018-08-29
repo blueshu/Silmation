@@ -143,7 +143,7 @@ def test_allan(data,fileName,request_body):
                           algorithm=algo,
                           fileName = fileName
                           )
-        sim.run(1,fileName,data)
+        sim.run(data.algorithmRunTimes,fileName,data)
         # generate simulation results, summary, and save data to files
         sim.results('demo',update_flag=True)  # save data files
         # plot data
@@ -194,9 +194,9 @@ def test_allan(data,fileName,request_body):
                         env=None,#'[0.1 0.01 0.11]g-random',
                         algorithm=algo,
                         fileName = fileName)
-        sim.run(1)
+        sim.run(data.algorithmRunTimes,fileName,data)
         # generate simulation results, summary, and save data to files
-        sim.results('aa')  # do not save data
+        sim.results('aa',update_flag=True)  # do not save data
     print int((time.time() - times)*1000)
 
 def deleteSaveDateFils():
