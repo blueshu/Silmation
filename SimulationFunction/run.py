@@ -166,7 +166,7 @@ def test_allan(data,fileName,request_body):
         staticsFlag = data.algorithmStatistics == 'end-point' 
         sim = ins_sim.Sim([fs, 0.0, 0.0],
                       motion_def_path+"//motion_def-90deg_turn.csv",
-                      ref_frame=1,
+                      ref_frame=data.ref_frame,
                       imu=imu,
                       mode=None,
                       env=None,
@@ -186,7 +186,7 @@ def test_allan(data,fileName,request_body):
         algo = dmu380_sim.DMU380Sim(cfg_file)
         sim = ins_sim.Sim([fs, 0.0, fs],
                         "//mnt//share//jd_figure8.csv",
-                        ref_frame=1,
+                        ref_frame=data.ref_frame,
                         imu=imu,
                         mode=None,
                         env=None,#'[0.1 0.01 0.11]g-random',
