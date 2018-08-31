@@ -89,7 +89,6 @@ motion_def_path = './/SimulationFunction//demo_motion_def_files//'
 fs = 100.0          # IMU sample frequency
 
 def test_allan(data,fileName,request_body):
-    times = time.time()
     '''
     An Allan analysis demo for Sim.
     '''
@@ -180,13 +179,12 @@ def test_allan(data,fileName,request_body):
         # do not save data since the simulation runs for 1000 times and generates too many results
         sim.results('demo',end_point=staticsFlag,update_flag=True)
     
-    elif data.algorithmName == 'Dmu380':
+    elif data.algorithmName == 'VG':
 
         from demo_algorithms import dmu380_sim
         cfg_file = os.path.abspath('.//demo_algorithms//dmu380_sim_lib//ekfSim_tilt.cfg')
         algo = dmu380_sim.DMU380Sim(cfg_file)
         sim = ins_sim.Sim([fs, 0.0, fs],
-                        #   motion_def_path+"//motion_def-static.csv",
                         "//mnt//share//jd_figure8.csv",
                         ref_frame=1,
                         imu=imu,
@@ -197,7 +195,8 @@ def test_allan(data,fileName,request_body):
         sim.run(data.algorithmRunTimes,fileName,data)
         # generate simulation results, summary, and save data to files
         sim.results('aa',update_flag=True)  # do not save data
-    print int((time.time() - times)*1000)
+
+    #print int(( - times)*1000)
 
 def deleteSaveDateFils():
     filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ),'.//demo_saved_data'))
