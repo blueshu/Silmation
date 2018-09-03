@@ -42,6 +42,7 @@ class FreeIntegration(object):
         # Earth gravity
         earth_param = geoparams.geo_param(ini_pos_vel_att[0:3])    # geo parameters
         self.g_n = np.array([0, 0, earth_param[2]])
+        print earth_param
 
     def run(self, set_of_input):
         '''
