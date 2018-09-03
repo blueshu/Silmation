@@ -25,17 +25,15 @@ class JSONObject:
 def localTest():
     data = {
         'accelJSON': '{"b":["0.0e-3","0.0e-3","0.0e-3"],"b_drift":["5.0e-5","5.0e-5","5.0e-5"],"b_corr":["100.0","100.0","100.0"],"vrw":[0.03,0.03,0.03]}',
-        'gpsJSON': '{"stdp":["5.0","5.0","7.0"],"stdv":[0.05,0.05,0.05]}',
         'initState': '[32,120,0,10,0,0,90,0,0]',
-        'magJSON': '{"std":[0.01,0.01,0.01]}',
         #'motionCommand': '[[1,0,0,0,0,0,0,1,0],[1,-15,0,0,0,0,0,6,0],[1,0,0,0,0,0,0,3,0]]',
-        'motionCommand': '[[1,0,0,0,0,0,0,200,0]]',
+        'motionCommand': '[[1,0,0,0,0,0,0,1,0],[1,-15,0,0,0,0,0,6,0],[1,0,0,0,0,0,0,3,0]]',
         'rateJSON': '{"b":["0.0","0.0","0.0"],"b_drift":[3.5,3.5,3.5],"b_corr":["100.0","100.0","100.0"],"arw":[0.25,0.25,0.25]}',
         'ref_frame': 1,
         'userId': 143,
         #'algorithmName': 'Dmu380',
         'algorithmName': 'FreeIntegration',
-        'algorithmRunTimes': 100,
+        'algorithmRunTimes': 2,
         'algorithmParams': '0.5585053606381855,2.0943951023931953,0.0,10.0,0.0,0.0,1.5707963267948966,0.0,0.0',
         'algorithmStatistics': 'end-point',
         'userToken': 'giLbw9K01VBA9GAQsdSxpStrjTSPXRilNMdsPYFFaZDkQjkZYTdOQ5TB208pt5pU'
@@ -171,7 +169,7 @@ def test_allan(data,fileName,request_body):
                       mode=None,
                       env=None,
                       algorithm=algo,
-                      fileName = fileName
+                      fileName =fileName
                       )
         # run the simulation for 1000 times
         sim.run(data.algorithmRunTimes,fileName,data)
@@ -204,5 +202,5 @@ def deleteSaveDateFils():
     shutil.rmtree(filePath)
 
 if __name__ == '__main__':
-    #getHttpMsg()
-    localTest()
+    getHttpMsg()
+    #localTest()

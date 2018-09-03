@@ -695,8 +695,8 @@ class Sim(object):
             def __init__(self, d):
                 self.__dict__ = d
 
-        ini_state = np.array(json.loads(self.data.initState, object_hook=JSONObject))
-        waypoints = np.array(json.loads(self.data.motionCommand, object_hook=JSONObject))
+        ini_state = np.array(json.loads(self.data.initState, object_hook=JSONObject),dtype='float')
+        waypoints = np.array(json.loads(self.data.motionCommand, object_hook=JSONObject),dtype='float')
         ini_pos_n = ini_state[0:3]
         ini_pos_n[0] = ini_pos_n[0] * D2R
         ini_pos_n[1] = ini_pos_n[1] * D2R
