@@ -8,7 +8,7 @@ Created on 2018-04-24
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from . import sim_data
 from .sim_data import Sim_data
 from ..attitude import attitude
