@@ -202,6 +202,6 @@ def deleteSaveDateFils():
     shutil.rmtree(filePath)
 
 if __name__ == '__main__':
-    time.sleep(1000)
+    time.sleep(10)
     #getHttpMsg()
     #localTest()
