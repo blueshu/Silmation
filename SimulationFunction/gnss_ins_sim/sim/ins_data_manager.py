@@ -8,7 +8,7 @@ Created on 2018-04-24
 """
 
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from . import sim_data
 from .sim_data import Sim_data
 from ..attitude import attitude
@@ -183,12 +183,10 @@ class InsDataMgr(object):
                            description='accel bias estimation',\
                            units=['m/s^2', 'm/s^2', 'm/s^2'],\
                            legend=['accel_bias_x', 'accel_bias_y', 'accel_bias_z'])
-        self.allan_t = Sim_data(name='allan_t',\
-                                description='Allan var time',\
-                                units=['s'])
         self.ad_gyro = Sim_data(name='ad_gyro',\
                                 description='Allan deviation of gyro',\
                                 units=['rad/s', 'rad/s', 'rad/s'],\
+                                output_units=['deg/hr', 'deg/hr', 'deg/hr'],\
                                 logx=True, logy=True,\
                                 legend=['AD_wx', 'AD_wy', 'AD_wz'])
         self.ad_accel = Sim_data(name='ad_accel',\
@@ -234,7 +232,6 @@ class InsDataMgr(object):
             self.att_euler.name: self.att_euler,
             self.wb.name: self.wb,
             self.ab.name: self.ab,
-            self.allan_t.name: self.allan_t,
             self.ad_gyro.name: self.ad_gyro,
             self.ad_accel.name: self.ad_accel
             }
@@ -393,7 +390,109 @@ class InsDataMgr(object):
                 data_saved.append(data)
         return data_saved
 
-    
+    def plot(self, what_to_plot, keys, opt=None, extra_opt=''):
+        '''
+        Plot specified results.
+        Args:
+            what_to_plot: a string to specify what to plot. See manual for details.
+            keys: specify the simulation data of multiple run. This can be an integer, or a list
+                or tuple. Each element should be within [0, num_times-1]. Default is None, and
+                plot data of all simulations.
+            opt: a dict to specify plot options. its keys are composed of elements in what_to_plot.
+                values can be:
+                    'error': plot the error of the data specified by what_to_plot w.r.t ref
+                    '3d': 3d plot
+            extra_opt: strings to specify matplotlib properties.
+        '''
+        if what_to_plot in self.available:
+            # get plot options
+            ref = None
+            plot3d = 0
+            # this data has plot options?
+            if isinstance(opt, dict):
+                if what_to_plot in opt:
+                    if opt[what_to_plot].lower() == '3d':
+                        plot3d = 1
+                    elif opt[what_to_plot].lower() == 'projection':
+                        plot3d = 2
+                    elif opt[what_to_plot].lower() == 'error':
+                        # this data have reference, error can be calculated
+                        ref_name = 'ref_' + what_to_plot
+                        if ref_name in self.available:
+                            ref = self.__all[ref_name]
+                        else:
+                            print(what_to_plot + ' has no reference.')
+            # default x axis data
+            x_axis = self.time
+            # choose proper x axis data for specific y axis data
+            if what_to_plot == self.ref_gps.name or what_to_plot == self.gps.name or\
+                what_to_plot == self.gps_time.name:
+                x_axis = self.gps_time
+            elif what_to_plot in self.__algo_output and self.algo_time.name in self.available:
+                x_axis = self.algo_time
+            # plot
+            # if data in what_to_plot and data in ref have different dimension, interp is needed.
+            if ref is not None:
+                # create tmp_ref in order not to change ref
+                tmp_ref = Sim_data(name=ref.name,\
+                                   description=ref.description,\
+                                   units=ref.units,\
+                                   output_units=ref.output_units,\
+                                   plottable=ref.plottable,\
+                                   logx=ref.logx, logy=ref.logy,\
+                                   grid=ref.grid,\
+                                   legend=ref.legend)
+                # interp data in ref to tmp_ref if needed
+                if isinstance(self.__all[what_to_plot].data, dict):
+                    last_key = None     # key of last interp data
+                    for i in self.__all[what_to_plot].data:
+                        # ref.data cannot be a dict, only one ref for each data is allowed
+                        # data in what_to_plot can have different samples for different keys
+                        # so each key should have its own reference data
+                        if ref.data.shape[0] != self.__all[what_to_plot].data[i].shape[0]:
+                            # if last interp dimension is the same, do not need same interp
+                            if last_key is not None:
+                                if tmp_ref.data[last_key].shape[0] ==\
+                                    self.__all[what_to_plot].data[i].shape[0]:
+                                    # print('using results from last interp')
+                                    tmp_ref.data[i] = tmp_ref.data[last_key]
+                                    continue
+                            # interp
+                            if self.algo_time.name in self.available and\
+                                self.time.name in self.available:
+                                tmp_ref.data[i] = self.__interp(self.algo_time.data[i],\
+                                                                self.time.data, ref.data)
+                                last_key = i
+                            # no algo_time or time vars for interp, no error plot is available
+                            else:
+                                print('need interp for %s, but cannot do that.'% what_to_plot)
+                                tmp_ref = None
+                                break
+                        else:
+                            tmp_ref.data[i] = ref.data
+                elif isinstance(self.__all[what_to_plot].data, np.ndarray):
+                    if ref.data.shape[0] != self.__all[what_to_plot].data[i].shape[0]:
+                        if self.algo_time.name in self.available and\
+                            self.time.name in self.available:
+                            tmp_ref.data[i] = self.__interp(self.algo_time.data[i],\
+                                                            self.time.data, ref.data)
+                        else:
+                            tmp_ref = None
+                    else:
+                        tmp_ref.data[i] = ref.data
+                else:# this is impossible
+                    tmp_ref.data = ref.data
+                self.__all[what_to_plot].plot(x_axis, key=keys, ref=tmp_ref,\
+                                              plot3d=plot3d, extra_opt=extra_opt)
+            else:
+                self.__all[what_to_plot].plot(x_axis, key=keys, ref=None,\
+                                              plot3d=plot3d, extra_opt=extra_opt)
+        else:
+            print('Unsupported plot: %s.'% what_to_plot)
+            # print("Only the following data are available for plot:")
+            # print(list(self.supported_plot.keys()))
+            # raise ValueError("Unsupported data to plot: %s."%data)
+
     def save_kml_files(self, data_dir):
         '''
         generate kml files from reference position and simulation position.

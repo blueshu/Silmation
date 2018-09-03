@@ -9,9 +9,9 @@ Created on 2017-12-19
 
 import math
 import numpy as np
-#import matplotlib.pyplot as plt
-#import matplotlib.mlab as mlab
-#from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
+from mpl_toolkits.mplot3d import Axes3D
 from ..attitude import attitude
 
 D2R = math.pi/180
@@ -170,7 +170,143 @@ class Sim_data(object):
                        convert_unit(self.data, self.units, self.output_units),\
                        header=header_line, delimiter=',', comments='')
 
-   
+    def plot(self, x, key=None, ref=None, plot3d=0, extra_opt=''):
+        '''
+        Plot self.data[key]
+        Args:
+            key is a tuple or list of keys
+            x: x axis data
+            ref: reference data for error plot is in ref.data
+            plot3d: 1--3D plot, 2--3D plot projected on xy, xz and yz, otherwise--2D plot
+            extra_opt: strings to specify matplotlib properties.
+        '''
+        if self.plottable:
+            if isinstance(self.data, dict):
+                self.__plot_dict(x, key, ref, plot3d, extra_opt)
+            else:
+                self.__plot_array(x, ref, plot3d, extra_opt)
+
+    def __plot_dict(self, x, key, ref=None, plot3d=0, extra_opt=''):
+        '''
+        self.data is a dict. plot self.data according to key
+        Args:
+            x: x axis data Sim_data object.
+            key: a list of keys to specify what data in self.data is plotted.
+                If key is an empty list, plot all keys in self.data
+            ref: reference data for error plot is in ref.data
+            plot3d: 1--3D plot, 2--3D plot projected on xy, xz and yz, otherwise--2D plot
+            extra_opt: strings to specify matplotlib properties.
+        '''
+        if key == []:
+            key = self.data.keys()
+        for i in key:
+            y_data = self.data[i]
+            # x axis
+            if isinstance(x.data, dict):
+                if not x.data:  # x.data could be an empty dict
+                    x_data = None
+                else:
+                    x_data = x.data[i]
+            else:
+                x_data = x.data
+            # error
+            if ref is not None:
+                if isinstance(ref.data, dict):
+                    ref_data = ref.data[i]
+                else:
+                    ref_data = ref.data
+                try:
+                    y_data = y_data - ref_data
+                    if self.units == ['rad', 'rad', 'rad']:
+                        y_data = y_data % attitude.TWO_PI
+                        idx = y_data > math.pi
+                        y_data[idx] = y_data[idx] - attitude.TWO_PI
+                except:
+                    print('ref data shape: ', ref_data.shape)
+                    print('simulation data shape: ', y_data.shape)
+                    raise ValueError('Check input data ref and self.data dimension.')
+            # unit conversion
+            y_data = convert_unit(y_data, self.units, self.output_units)
+            # plot
+            if plot3d == 1:
+                plot3d_in_one_figure(y_data,\
+                                     title=self.name + '_' + str(i),\
+                                     grid=self.grid,\
+                                     legend=self.legend,\
+                                     extra_opt=extra_opt)
+            elif plot3d == 2:
+                plot3d_proj_in_one_figure(y_data,\
+                                          title=self.name + '_' + str(i),\
+                                          grid=self.grid,\
+                                          legend=self.legend,\
+                                          extra_opt=extra_opt)
+            else:
+                plot_in_one_figure(x_data, y_data,\
+                                   logx=self.logx, logy=self.logy,\
+                                   title=self.name + '_' + str(i),\
+                                   xlabel=x.name + ' (' + x.output_units[0] + ')',\
+                                   ylabel=self.name + ' (' + str(self.output_units) + ')',\
+                                   grid=self.grid,\
+                                   legend=self.legend,\
+                                   extra_opt=extra_opt)
+
+    def __plot_array(self, x, ref=None, plot3d=0, extra_opt=''):
+        '''
+        self.data is a numpy.array
+        Args:
+            x: x axis data Sim_data object.
+            ref: reference data for error plot is in ref.data
+            plot3d: 1--3D plot, 2--3D plot projected on xy, xz and yz, otherwise--2D plot
+        '''
+        # x axis
+        if isinstance(x.data, dict):
+            if not x.data:  # x.data could be an empty dict
+                x_data = None
+            else:
+                # randomly choose data of any key
+                for i in x.data:
+                    x_data = x.data[i]
+                    break
+        else:
+            x_data = x.data
+        # error
+        y_data = self.data
+        if ref is not None:
+            try:
+                y_data = self.data - ref.data
+                if self.units == ['rad', 'rad', 'rad']:
+                    y_data = y_data % attitude.TWO_PI
+                    idx = y_data > math.pi
+                    y_data[idx] = y_data[idx] - attitude.TWO_PI
+            except:
+                print(ref.shape)
+                print(self.data.shape)
+                raise ValueError('Check input data ref and self.data dimension.')
+        # unit conversion
+        y_data = convert_unit(y_data, self.units, self.output_units)
+        # plot
+        if plot3d == 1:
+            plot3d_in_one_figure(y_data,\
+                                 title=self.name,\
+                                 grid=self.grid,\
+                                 legend=self.legend,\
+                                 extra_opt=extra_opt)
+        elif plot3d == 2:
+            plot3d_proj_in_one_figure(y_data,\
+                                      title=self.name,\
+                                      grid=self.grid,\
+                                      legend=self.legend,\
+                                      extra_opt=extra_opt)
+        else:
+            plot_in_one_figure(x_data, y_data,\
+                               logx=self.logx, logy=self.logy,\
+                               xlabel=x.name + ' (' + x.output_units[0] + ')',\
+                               ylabel=self.name + ' (' + str(self.output_units) + ')',\
+                               title=self.name,\
+                               grid=self.grid,\
+                               legend=self.legend,\
+                               extra_opt=extra_opt)
+
 def convert_unit(data, src_unit, dst_unit):
     '''
     Unit conversion. Notice not to change values in data
@@ -204,11 +340,15 @@ def unit_conversion_scale(src_unit, dst_unit):
             scale[i] = D2R
         elif src_unit[i] == 'deg/s' and dst_unit[i] == 'rad/s':
             scale[i] = D2R
+        elif src_unit[i] == 'deg/hr' and dst_unit[i] == 'rad/s':
+            scale[i] = D2R / 3600.0
         # rad to deg
         elif src_unit[i] == 'rad' and dst_unit[i] == 'deg':
             scale[i] = 1.0/D2R
         elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/s':
             scale[i] = 1.0/D2R
+        elif src_unit[i] == 'rad/s' and dst_unit[i] == 'deg/hr':
+            scale[i] = 3600.0/D2R
         else:
             pass
             # print('No need or not know how to convert from %s to %s.'% (src_unit, dst_unit))
@@ -238,3 +378,158 @@ def convert_unit_ndarray_scalar(x, scale):
     else:
         raise ValueError('Input x should be a scalar, 1D or 2D array, ndim = %s'% x.ndim)
     return x
+
+def plot_in_one_figure(x, y, logx=False, logy=False,\
+                       title='Figure', xlabel=None, ylabel=None,\
+                       grid='on', legend=None,\
+                       extra_opt=''):
+    '''
+    Create a figure and plot x/y in this figure.
+    Args:
+        x: x axis data, np.array of size (n,) or (n,1)
+        y: y axis data, np.array of size (n,m)
+        title: figure title
+        xlabel: x axis label
+        ylabel: y axis label
+        gird: if this is not 'off', it will be changed to 'on'
+        legend: tuple or list of strings of length m.
+    '''
+    # create figure and axis
+    fig = plt.figure(title)
+    axis = fig.add_subplot(111)
+    lines = []
+    # if not x data, generate default x data
+    if x is None:
+        x = np.array(range(y.shape[0]))
+    try:
+        dim = y.ndim
+        if dim == 1:
+            if logx and logy:   # loglog
+                line, = axis.loglog(x, y, extra_opt)
+            elif logx:          # semilogx
+                line, = axis.semilogx(x, y, extra_opt)
+            elif logy:          # semilogy
+                line, = axis.semilogy(x, y, extra_opt)
+            else:               # plot
+                line, = axis.plot(x, y, extra_opt)
+            lines.append(line)
+        elif dim == 2:
+            for i in range(0, y.shape[1]):
+                if logx and logy:   # loglog
+                    line, = axis.loglog(x, y[:, i], extra_opt)
+                elif logx:          # semilogx
+                    line, = axis.semilogx(x, y[:, i], extra_opt)
+                elif logy:          # semilogy
+                    line, = axis.semilogy(x, y[:, i], extra_opt)
+                else:               # plot
+                    line, = axis.plot(x, y[:, i], extra_opt)
+                lines.append(line)
+        else:
+            raise ValueError
+    except:
+        print('x-axis data len: ', x.shape)
+        print('y-axis data shape: ', y.shape)
+        raise ValueError('Check input data y.')
+    # label
+    if xlabel is not None:
+        plt.xlabel(xlabel)
+    if ylabel is not None:
+        plt.ylabel(ylabel)
+    # legend
+    if legend is not None:
+        plt.legend(lines, legend)
+    # grid
+    if grid.lower() != 'off':
+        plt.grid()
+
+def plot3d_in_one_figure(y, title='Figure', grid='on', legend=None, extra_opt=''):
+    '''
+    Create a figure and plot 3d trajectory in this figure.
+    Args:
+        y: y axis data, np.array of size (n,3)
+        title: figure title
+        gird: if this is not 'off', it will be changed to 'on'
+        legend: tuple or list of strings of length 3.
+    '''
+    # create figure and axis
+    fig = plt.figure(title)
+    axis = fig.add_subplot(111, projection='3d', aspect='equal')
+    try:
+        dim = y.ndim
+        if dim == 2:    # y must be an numpy array of size (n,3), dim=2
+            if y.shape[1] != 3:
+                raise ValueError
+            else:
+                axis.plot(y[:, 0], y[:, 1], y[:, 2], extra_opt)
+        else:
+            raise ValueError
+    except:
+        print(y.shape)
+        raise ValueError('Check input data y.')
+    # label
+    if isinstance(legend, (tuple, list)):
+        n = len(legend)
+        if n != 3:
+            legend = ['x', 'y', 'z']
+    else:
+        legend = ['x', 'y', 'z']
+    axis.set_xlabel(legend[0])
+    axis.set_ylabel(legend[1])
+    axis.set_zlabel(legend[2])
+    # grid
+    if grid.lower() != 'off':
+        plt.grid()
+
+
+def plot3d_proj_in_one_figure(y, title='Figure', grid='on', legend=None, extra_opt=''):
+    '''
+    Create a figure and plot 3d trajectory in this figure.
+    Args:
+        y: y axis data, np.array of size (n,3)
+        title: figure title
+        gird: if this is not 'off', it will be changed to 'on'
+        legend: tuple or list of strings of length 3.
+    '''
+    # plot data
+    try:
+        dim = y.ndim
+        if dim == 2:    # y must be an numpy array of size (n,3), dim=2
+            if y.shape[1] != 3:
+                raise ValueError
+            else:
+                # check label
+                if isinstance(legend, (tuple, list)):
+                    n = len(legend)
+                    if n != 3:
+                        legend = ['x', 'y', 'z']
+                else:
+                    legend = ['x', 'y', 'z']
+                # check grid
+                show_grid = False
+                if grid.lower() != 'off':
+                    show_grid = True
+                # create figure and axis
+                # xy
+                fig = plt.figure(title)
+                axis = fig.add_subplot(131, aspect='equal')
+                axis.plot(y[:, 0], y[:, 1], extra_opt)
+                axis.set_xlabel(legend[0])
+                axis.set_ylabel(legend[1])
+                axis.grid(show_grid)
+                # xz
+                axis = fig.add_subplot(132, aspect='equal')
+                axis.plot(y[:, 0], y[:, 2], extra_opt)
+                axis.set_xlabel(legend[0])
+                axis.set_ylabel(legend[2])
+                axis.grid(show_grid)
+                # yz
+                axis = fig.add_subplot(133, aspect='equal')
+                axis.plot(y[:, 1], y[:, 2], extra_opt)
+                axis.set_xlabel(legend[1])
+                axis.set_ylabel(legend[2])
+                axis.grid(show_grid)
+        else:
+            raise ValueError
+    except:
+        print(y.shape)
+        raise ValueError('Check input data y.')
