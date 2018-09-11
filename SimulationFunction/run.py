@@ -202,5 +202,5 @@ def deleteSaveDateFils():
     shutil.rmtree(filePath)
 
 if __name__ == '__main__':
-    deleteSaveDateFils()
+    getHttpMsg()
     #localTest()
