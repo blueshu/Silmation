@@ -163,10 +163,10 @@ class Sim(object):
                 for i in range(len(self.amgr.output)):
                     self.azDataUpload.update_status(0,None,i)
                     self.dmgr.add_data(self.amgr.output[i], algo_output[i])
-        # simulation complete successfully
-        self.sim_complete = True
-        # update status = 1
-        self.azDataUpload.update_status(1)
+                # simulation complete successfully
+                self.sim_complete = True
+                # update status = 1
+                self.azDataUpload.update_status(1)
 
     def results(self, data_dir=None, end_point=False, gen_kml=False, update_flag=False):
         '''
