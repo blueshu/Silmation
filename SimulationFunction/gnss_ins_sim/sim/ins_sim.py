@@ -155,12 +155,14 @@ class Sim(object):
             # tell data manager the output of the algorithm
             self.dmgr.set_algo_output(self.amgr.output)
             # get algo input data
-            algo_input = self.dmgr.get_data(self.amgr.input)
-            # run the algo and get algo output
-            algo_output = self.amgr.run_algo(algo_input, range(self.sim_count))
-            # add algo output to ins_data_manager
-            for i in range(len(self.amgr.output)):
-                self.dmgr.add_data(self.amgr.output[i], algo_output[i])
+            algo_input = self.dmgr.get_data(self.amgr.input,self.azDataUpload)
+            if algo_input is not None:
+                # run the algo and get algo output
+                algo_output = self.amgr.run_algo(algo_input, range(self.sim_count))
+                # add algo output to ins_data_manager
+                for i in range(len(self.amgr.output)):
+                    self.azDataUpload.update_status(0,None,i)
+                    self.dmgr.add_data(self.amgr.output[i], algo_output[i])
         # simulation complete successfully
         self.sim_complete = True
         # update status = 1
