@@ -161,6 +161,7 @@ class Sim(object):
                 algo_output = self.amgr.run_algo(algo_input, range(self.sim_count))
                 # add algo output to ins_data_manager
                 for i in range(len(self.amgr.output)):
+                    print i
                     self.azDataUpload.update_status(0,None,i)
                     self.dmgr.add_data(self.amgr.output[i], algo_output[i])
                 # simulation complete successfully
