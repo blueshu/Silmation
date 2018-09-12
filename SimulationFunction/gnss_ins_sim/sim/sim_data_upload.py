@@ -66,6 +66,7 @@ class DataUpload(object):
         if self.files is not None:
             text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'&,&'+'&,&'.join(self.files)
         else:
+            print algoIndex
             text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'&,&'+ str(algoIndex)
         if msg is not None:
             text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT') +'&,&'+ msg
