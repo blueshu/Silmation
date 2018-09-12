@@ -32,7 +32,7 @@ def localTest():
         'ref_frame': 1,
         'userId': 143,
         #'algorithmName': 'Dmu380',
-        'algorithmName': 'FreeIntegration',
+        'algorithmName': 'VG',
         'algorithmRunTimes': 2,
         'algorithmParams': '0.5585053606381855,2.0943951023931953,0.0,10.0,0.0,0.0,1.5707963267948966,0.0,0.0',
         'algorithmStatistics': 'end-point',
@@ -175,7 +175,7 @@ def test_allan(data,fileName,request_body):
         sim.run(data.algorithmRunTimes,fileName,data)
         # generate simulation results, summary
         # do not save data since the simulation runs for 1000 times and generates too many results
-        sim.results('demo',end_point=staticsFlag,update_flag=True)
+        sim.results('demo',gen_kml= True,end_point=staticsFlag,update_flag=True)
     
     elif data.algorithmName == 'VG':
 
@@ -192,7 +192,7 @@ def test_allan(data,fileName,request_body):
                         fileName = fileName)
         sim.run(data.algorithmRunTimes,fileName,data)
         # generate simulation results, summary, and save data to files
-        sim.results('aa',update_flag=True)  # do not save data
+        sim.results('aa',gen_kml= True,update_flag=True,)  # do not save data
 
     #print int(( - times)*1000)
 
