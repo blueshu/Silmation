@@ -62,14 +62,13 @@ class DataUpload(object):
         shutil.rmtree(filePath)
         print('finished')
 
-    def update_status(self,status = 0, msg = None, algoIndex = 0):
+    def update_status(self,status = 0, errorMsg = None):
         if self.files is not None:
             text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'&,&'+'&,&'.join(self.files)
         else:
-            print algoIndex
-            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')+'&,&'+ str(algoIndex)
-        if msg is not None:
-            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT') +'&,&'+ msg
+            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+        if errorMsg is not None:
+            text = str(status) + '&,&' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT') +'&,&'+ errorMsg
         name = self.folderName + '/status.cvs'
         append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
         append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
