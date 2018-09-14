@@ -84,7 +84,7 @@ def write_http_response(status, body_dict):
 # globals
 D2R = math.pi/180
 motion_def_path = './/SimulationFunction//demo_motion_def_files//'
-fs = 100.0          # IMU sample frequency
+
 
 def test_allan(data,fileName,request_body):
     '''
@@ -127,11 +127,12 @@ def test_allan(data,fileName,request_body):
 
     
     if data.algorithmName == 'Allan':
+        Allanfs = 100.0          # IMU sample frequency
         #### Allan analysis algorithm
         from demo_algorithms import allan_analysis
         algo = allan_analysis.Allan()
         #### start simulation
-        sim = ins_sim.Sim([fs, 0.0, 0.0],
+        sim = ins_sim.Sim([Allanfs, 0.0, 0.0],
                           motion_def_path+"//motion_def-Allan.csv",
                           ref_frame=data.ref_frame,
                           imu=imu,
@@ -148,6 +149,7 @@ def test_allan(data,fileName,request_body):
 
 
     elif data.algorithmName == 'FreeIntegration':
+        Freefs = 100.0          # IMU sample frequency
         # Free integration in a virtual inertial frame
         ini_pos_vel_att = np.fromstring(data.algorithmParams, dtype=float, sep=',')
         #ini_pos_vel_att[0] = ini_pos_vel_att[0] * D2R
@@ -162,7 +164,7 @@ def test_allan(data,fileName,request_body):
         from demo_algorithms import free_integration
         algo = free_integration.FreeIntegration(ini_pos_vel_att)
         staticsFlag = data.algorithmStatistics == 'end-point' 
-        sim = ins_sim.Sim([fs, 0.0, 0.0],
+        sim = ins_sim.Sim([Freefs, 0.0, 0.0],
                       motion_def_path+"//motion_def-90deg_turn.csv",
                       ref_frame=data.ref_frame,
                       imu=imu,
@@ -178,11 +180,11 @@ def test_allan(data,fileName,request_body):
         sim.results('demo',gen_kml= True,end_point=staticsFlag,update_flag=True)
     
     elif data.algorithmName == 'VG':
-
+        VGfs = 200.0          # IMU sample frequency
         from demo_algorithms import dmu380_sim
         cfg_file = os.path.abspath('.//demo_algorithms//dmu380_sim_lib//ekfSim_tilt.cfg')
         algo = dmu380_sim.DMU380Sim(cfg_file)
-        sim = ins_sim.Sim([fs, 0.0, fs],
+        sim = ins_sim.Sim([VGfs, 0.0, VGfs],
                         "//mnt//share//jd_figure8.csv",
                         ref_frame=data.ref_frame,
                         imu=imu,
