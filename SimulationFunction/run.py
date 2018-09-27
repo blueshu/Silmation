@@ -143,7 +143,7 @@ def test_allan(data,fileName,request_body):
                           )
         sim.run(data.algorithmRunTimes,fileName,data)
         # generate simulation results, summary, and save data to files
-        sim.results('demo',update_flag=True)  # save data files
+        sim.results('demo',gen_kml= True , update_flag=True)  # save data files
         # plot data
         #sim.plot(['ad_accel', 'ad_gyro'])
 
