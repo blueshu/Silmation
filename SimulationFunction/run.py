@@ -42,7 +42,7 @@ def localTest():
     data1 = json.loads(res, object_hook=JSONObject)
     print data1
     fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data1.userId)
-    test_allan(data1,fileName,res)
+    run_simulation(data1,fileName,res)
 
 def get_http_msg():
     env = os.environ
