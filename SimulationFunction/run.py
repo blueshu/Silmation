@@ -44,7 +44,7 @@ def localTest():
     fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data1.userId)
     test_allan(data1,fileName,res)
 
-def getHttpMsg():
+def get_http_msg():
     env = os.environ
     http_method = env['REQ_METHOD'] if 'REQ_METHOD' in env else 'GET'
 
@@ -55,7 +55,7 @@ def getHttpMsg():
             #fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data.userId)
             fileName = data.fileName
             write_http_response(200,{'fileName': fileName})
-            test_allan(data,fileName,request_body)
+            run_simulation(data,fileName,request_body)
             #
             #t1 = threading.Thread(target=write_http_response, args=(200,{'statusCode': '200','fileName': fileName}))
             #t2 = threading.Thread(target=test_allan, args=(data,fileName,request_body))
@@ -86,7 +86,7 @@ D2R = math.pi/180
 motion_def_path = './/SimulationFunction//demo_motion_def_files//'
 
 
-def test_allan(data,fileName,request_body):
+def run_simulation(data,fileName,request_body):
     '''
     An Allan analysis demo for Sim.
     '''
@@ -198,11 +198,11 @@ def test_allan(data,fileName,request_body):
 
     #print int(( - times)*1000)
 
-def deleteSaveDateFils():
+def delete_save_fils():
     filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ),'.//demo_saved_data'))
     print filePath
     shutil.rmtree(filePath)
 
 if __name__ == '__main__':
-    getHttpMsg()
+    get_http_msg()
     #localTest()
