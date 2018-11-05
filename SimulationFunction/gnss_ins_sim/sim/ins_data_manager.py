@@ -321,7 +321,7 @@ class InsDataMgr(object):
             else:
                 raise ValueError("Unsupported algorithm output: %s."% i)
 
-    def get_data(self, data_names):
+    def get_data(self, data_names, uploadFun = None):
         '''
         Get data section of data_names.
         Args:
@@ -335,6 +335,8 @@ class InsDataMgr(object):
             if i in self.available:
                 data.append(self.__all[i].data)
             else:
+                if uploadFun is not None:
+                    uploadFun.update_status(-1,'%s is not available.'% i)
                 print('%s is not available.'% i)
                 return None
         return data
