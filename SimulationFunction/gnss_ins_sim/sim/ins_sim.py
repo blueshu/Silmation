@@ -12,8 +12,8 @@ import time
 import math
 import numpy as np
 #import matplotlib.pyplot as plt
-#from .ins_data_manager import InsDataMgr
-#from .ins_algo_manager import InsAlgoMgr
+from .ins_data_manager import InsDataMgr
+from .ins_algo_manager import InsAlgoMgr
 from .sim_data_upload import DataUpload
 from ..pathgen import pathgen
 from .. attitude import attitude
