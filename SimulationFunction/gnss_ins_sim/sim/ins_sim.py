@@ -532,7 +532,7 @@ class Sim(object):
         ini_att = ini_state[6:9] * D2R
         if waypoints.ndim == 1: # if waypoints is of size (n,), change it to (1,n)
             waypoints = waypoints.reshape((1, len(waypoints)))
-        motion_def = waypoints[:, [0, 1, 2, 3, 4, 5, 6, 7]]
+        motion_def = waypoints[:, [0, 1, 2, 3, 4, 5, 6, 7, 8]]
         # convert deg to rad
         motion_def[:, 1:4] = motion_def[:, 1:4] * D2R
         # replace nan with 0.0, doing this to be compatible with older version motion def files.
@@ -663,7 +663,7 @@ class Sim(object):
         ini_att = ini_state[6:9] * D2R
         if waypoints.ndim == 1: # if waypoints is of size (n,), change it to (1,n)
             waypoints = waypoints.reshape((1, len(waypoints)))
-        motion_def = waypoints[:, [0, 1, 2, 3, 4, 5, 6, 7]]
+        motion_def = waypoints[:, [0, 1, 2, 3, 4, 5, 6, 7, 8]]
         # convert deg to rad
         motion_def[:, 1:4] = motion_def[:, 1:4] * D2R
         # replace nan with 0.0, doing this to be compatible with older version motion def files.
