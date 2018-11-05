@@ -8,7 +8,7 @@ Created on 2018-01-23
 """
 
 import os,sys
-#sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), 'myenv/Lib/site-packages')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), 'myenv/Lib/site-packages')))
 import math
 import numpy as np
 from gnss_ins_sim.sim import imu_model
