@@ -242,6 +242,13 @@ class Sim(object):
             print("Call Sim.run() to run the simulaltion first.")
             return None
 
+    def update_azure(self,data_dir=None):
+
+        if data_dir is None:    # data_dir specified, meaning to save .csv files
+                data_dir = self.__check_data_dir(data_dir)
+                # save data files
+        self.azDataUpload.begin_update_files(data_dir)
+
     def plot(self, what_to_plot, sim_idx=None, opt=None, extra_opt=''):
         '''
         Plot specified results.
