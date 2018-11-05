@@ -125,7 +125,7 @@ def run_simulation(data,fileName,request_body):
         gpsObj['stdv'] = np.array([float(gpsJSON.stdv[0]), float(gpsJSON.stdv[1]), float(gpsJSON.stdv[2])])  
         gpsObj['avail'] = 0.95
     # do not generate GPS and magnetometer data
-    imu = imu_model.IMU(accuracy=imu_err, axis=axisNum, gps=False,gps_opt=gpsObj)
+    imu = imu_model.IMU(accuracy=imu_err, axis=axisNum, gps=gpsFlag,gps_opt=gpsObj)
 
     
     if data.algorithmName == 'Allan':
