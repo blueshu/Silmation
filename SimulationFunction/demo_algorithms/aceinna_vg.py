@@ -127,9 +127,9 @@ class DMU380Sim(object):
         if platform.system() == 'Windows':
             self.ext = '.dll'
             if struct.calcsize("P") == 8:
-                self.ext = '-x64' + self.ext
+                self.ext = '_x64' + self.ext
             else:
-                self.ext = '-x86' + self.ext
+                self.ext = '_x86' + self.ext
         # algorithm description
         self.input = ['fs', 'gyro', 'accel']
         self.output = ['algo_time', 'att_euler', 'wb']
