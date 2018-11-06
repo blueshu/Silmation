@@ -125,9 +125,9 @@ def run_simulation(data,fileName,request_body):
         gpsObj['stdv'] = np.array([float(gpsJSON.stdv[0]), float(gpsJSON.stdv[1]), float(gpsJSON.stdv[2])])  
         gpsObj['avail'] = 0.95
     # do not generate GPS and magnetometer data
-    imu = imu_model.IMU(accuracy=imu_err, axis=axisNum, gps=gpsFlag,gps_opt=gpsObj)
-
-    
+    imu = imu_model.IMU(accuracy=imu_err, axis=axisNum, gps=gpsFlag, gps_opt=gpsObj)
+    print(gpsFlag)
+    print(gpsObj)
     if data.algorithmName == 'Allan':
         Allanfs = 100.0          # IMU sample frequency
         #### Allan analysis algorithm
@@ -205,6 +205,7 @@ def run_simulation(data,fileName,request_body):
         from demo_algorithms import aceinna_ins
         cfg_file = os.path.abspath('.//demo_algorithms//dmu380_sim_lib//ekfSim_ins.cfg')
         algo = aceinna_ins.DMU380Sim(cfg_file)
+        print(data.ref_frame)
         sim = ins_sim.Sim([INSfs, INSfs, INSfs],
                         "//mnt//share//jd_figure8.csv",
                         ref_frame=data.ref_frame,
