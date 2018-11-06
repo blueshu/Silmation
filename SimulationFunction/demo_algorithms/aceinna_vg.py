@@ -139,6 +139,7 @@ class DMU380Sim(object):
         this_dir = os.path.dirname(__file__)
         self.config_lib = os.path.join(this_dir, 'dmu380_sim_lib/libsim_utilities' + self.ext)
         self.sim_lib = os.path.join(this_dir, 'dmu380_sim_lib/aceinna_vg' + self.ext)
+        print(self.sim_lib)
         if not (os.path.exists(self.config_lib) and os.path.exists(self.sim_lib)):
             if not self.build_lib():
                 raise OSError('Shared libs not found.')
