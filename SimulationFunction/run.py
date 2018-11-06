@@ -35,7 +35,7 @@ def localTest():
         'userId': 143,
         #'algorithmName': 'Dmu380',
         'algorithmName': 'INS',
-        'algorithmRunTimes': 2,
+        'algorithmRunTimes': 1,
         'algorithmParams': '0.5585053606381855,2.0943951023931953,0.0,10.0,0.0,0.0,1.5707963267948966,0.0,0.0',
         'algorithmStatistics': 'end-point',
         'userToken': 'giLbw9K01VBA9GAQsdSxpStrjTSPXRilNMdsPYFFaZDkQjkZYTdOQ5TB208pt5pU'
@@ -134,7 +134,7 @@ def run_simulation(data,fileName,request_body):
         from demo_algorithms import allan_analysis
         algo = allan_analysis.Allan()
         #### start simulation
-        sim = ins_sim.Sim([Allanfs, 0.0, 0.0],
+        sim = ins_sim.Sim([Allanfs, Allanfs, 0.0],
                           motion_def_path+"//motion_def-Allan.csv",
                           ref_frame=data.ref_frame,
                           imu=imu,
@@ -166,7 +166,7 @@ def run_simulation(data,fileName,request_body):
         from demo_algorithms import free_integration
         algo = free_integration.FreeIntegration(ini_pos_vel_att)
         staticsFlag = data.algorithmStatistics == 'end-point' 
-        sim = ins_sim.Sim([Freefs, 0.0, 0.0],
+        sim = ins_sim.Sim([Freefs, Freefs, 0.0],
                       motion_def_path+"//motion_def-90deg_turn.csv",
                       ref_frame=data.ref_frame,
                       imu=imu,
@@ -184,10 +184,10 @@ def run_simulation(data,fileName,request_body):
     
     elif data.algorithmName == 'VG':
         VGfs = 200.0          # IMU sample frequency
-        from demo_algorithms import dmu380_sim
+        from demo_algorithms import aceinna_vg
         cfg_file = os.path.abspath('.//demo_algorithms//dmu380_sim_lib//ekfSim_tilt.cfg')
-        algo = dmu380_sim.DMU380Sim(cfg_file)
-        sim = ins_sim.Sim([VGfs, 0.0, VGfs],
+        algo = aceinna_vg.DMU380Sim(cfg_file)
+        sim = ins_sim.Sim([VGfs, VGfs, VGfs],
                         "//mnt//share//jd_figure8.csv",
                         ref_frame=data.ref_frame,
                         imu=imu,
@@ -198,7 +198,7 @@ def run_simulation(data,fileName,request_body):
                         data = data)
         sim.run(data.algorithmRunTimes)
         # generate simulation results, summary, and save data to files
-        sim.results('aa',gen_kml= True,update_flag=True,)  # do not save data
+        sim.results('demo',gen_kml= True,update_flag=True,)  # do not save data
 
     elif data.algorithmName == 'INS':
         INSfs = 200.0          # IMU sample frequency
@@ -216,13 +216,12 @@ def run_simulation(data,fileName,request_body):
                         data = data)
         sim.run(data.algorithmRunTimes)
         # generate simulation results, summary, and save data to files
-        sim.results('aa',gen_kml= True,update_flag=True,)  # do not save data
+        sim.results('demo',gen_kml= True,update_flag=True,)  # do not save data
 
 def delete_save_fils():
-    filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ),'.//demo_saved_data'))
+    filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ),'.//demo'))
     print filePath
     shutil.rmtree(filePath)
 
 if __name__ == '__main__':
-    #get_http_msg()
-    localTest()
+    get_http_msg()

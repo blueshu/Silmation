@@ -24,7 +24,7 @@ class DataUpload(object):
         self.files = None #for save output files
 
     def readFils(self):
-        pathName = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath))
+        pathName = os.path.abspath('.//' + self.dirPath)
         for root, dirs, files in os.walk(pathName):
             self.files = files
             self.totalFiles = len(files)
@@ -46,7 +46,7 @@ class DataUpload(object):
 
     def update_files(self,fileName):
         try:
-            filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath + '/' + fileName))
+            filePath = os.path.abspath('.//' + self.dirPath+ '/' + fileName)
             f = open(filePath, 'r')
             text = f.read()
             f.close()
@@ -58,7 +58,8 @@ class DataUpload(object):
             print(e)
 
     def clear_files(self):
-        filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath))
+        #filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath))
+        filePath = os.path.abspath('.//' + self.dirPath)
         shutil.rmtree(filePath)
         print('finished')
 
