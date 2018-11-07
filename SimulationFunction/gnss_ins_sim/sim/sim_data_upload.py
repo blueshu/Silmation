@@ -24,7 +24,7 @@ class DataUpload(object):
         self.files = None #for save output files
 
     def readFils(self):
-        pathName = os.path.abspath('.//' + self.dirPath)
+        pathName = os.path.abspath('.//demo')
         for root, dirs, files in os.walk(pathName):
             self.files = files
             self.totalFiles = len(files)
@@ -46,11 +46,10 @@ class DataUpload(object):
 
     def update_files(self,fileName):
         try:
-            filePath = os.path.abspath('.//' + self.dirPath+ '/' + fileName)
+            filePath = os.path.abspath('.//demo/' + fileName)
             f = open(filePath, 'r')
             text = f.read()
             f.close()
-            print(filePath)
             name = self.folderName + '/' + fileName
             append_blob_service = AppendBlobService(account_name='navview', account_key='+roYuNmQbtLvq2Tn227ELmb6s1hzavh0qVQwhLORkUpM0DN7gxFc4j+DF/rEla1EsTN2goHEA1J92moOM/lfxg==', protocol='http')
             append_blob_service.create_blob(container_name='data', blob_name=name,content_settings=ContentSettings(content_type='text/plain'))
@@ -60,7 +59,7 @@ class DataUpload(object):
 
     def clear_files(self):
         #filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath))
-        filePath = os.path.abspath('.//' + self.dirPath)
+        filePath = os.path.abspath('.//demo')
         shutil.rmtree(filePath)
         print('finished')
 
