@@ -230,8 +230,10 @@ class Sim(object):
             
             if update_flag is True:
                 if data_dir is not None:
+                    print(data_dir)
                     self.update_azure(data_dir=data_dir)
 
+            print(update_flag,data_dir)
             self.azDataUpload.update_status(3)
             #### simulation results are generated
             self.sim_results = True
