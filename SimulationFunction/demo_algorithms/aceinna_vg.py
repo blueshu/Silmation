@@ -24,7 +24,7 @@ class SIM_COMFIG(Structure):
     '''
     read config params from file, and put params in this structure
     '''
-   _fields_ = [("_pktType", c_bool),
+    _fields_ = [("_pktType", c_bool),
                 ("pktType", c_uint8),
                 ("_inputDataRate", c_bool),
                 ("inputDataRate", c_uint8),
