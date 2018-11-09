@@ -86,7 +86,7 @@ class InsAlgoMgr(object):
                                             % (input_data[j].keys(), key))
                     else:
                         set_of_input.append(input_data[j])
-                self.algo[i].run(set_of_input)
+                self.algo[i].run(copy.deepcopy(set_of_input))   # deepcopy to avoid being changed
                 # get algorithm output of this run
                 this_results = self.algo[i].get_results()
                 # add algorithm output of this run to results
