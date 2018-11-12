@@ -144,7 +144,7 @@ def run_simulation(data,fileName,request_body):
                           )
         sim.run(data.algorithmRunTimes)
         # generate simulation results, summary, and save data to files
-        sim.results('demo',gen_kml= True , update_flag=True)  # save data files
+        sim.results(fileName,gen_kml= True , update_flag=True)  # save data files
         # plot data
         #sim.plot(['ad_accel', 'ad_gyro'])
 
@@ -178,7 +178,7 @@ def run_simulation(data,fileName,request_body):
         sim.run(data.algorithmRunTimes)
         # generate simulation results, summary
         # do not save data since the simulation runs for 1000 times and generates too many results
-        sim.results('demo',gen_kml= True,end_point=staticsFlag,update_flag=True)
+        sim.results(fileName,gen_kml= True,end_point=staticsFlag,update_flag=True)
     
     elif data.algorithmName == 'VG':
         VGfs = 200.0          # IMU sample frequency
@@ -196,7 +196,7 @@ def run_simulation(data,fileName,request_body):
                         data = data)
         sim.run(data.algorithmRunTimes)
         # generate simulation results, summary, and save data to files
-        sim.results('demo',gen_kml= True,update_flag=True,)  # do not save data
+        sim.results(fileName,gen_kml= True,update_flag=True,)  # do not save data
 
     elif data.algorithmName == 'INS':
         INSfs = 200.0          # IMU sample frequency
@@ -214,7 +214,7 @@ def run_simulation(data,fileName,request_body):
                         data = data)
         sim.run(data.algorithmRunTimes)
         # generate simulation results, summary, and save data to files
-        sim.results('demo',gen_kml= True,update_flag=True,)  # do not save data
+        sim.results(fileName,gen_kml= True,update_flag=True,)  # do not save data
 
 def delete_save_fils():
     filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ),'.//demo'))
