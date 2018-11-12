@@ -6,6 +6,7 @@ Manage all possible algorithms in an INS solution.
 Created on 2018-04-28
 @author: dongxiaoguang
 """
+import copy
 
 class InsAlgoMgr(object):
     '''
