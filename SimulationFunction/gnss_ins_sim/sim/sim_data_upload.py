@@ -25,7 +25,6 @@ class DataUpload(object):
 
     def readFils(self):
         pathName = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath))
-        print(pathName)
         for root, dirs, files in os.walk(pathName):
             self.files = files
             self.totalFiles = len(files)
@@ -48,7 +47,6 @@ class DataUpload(object):
     def update_files(self,fileName):
         try:
             filePath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), self.dirPath)) +'/'+ fileName
-            print(filePath)
             f = open(filePath, 'r')
             text = f.read()
             f.close()
