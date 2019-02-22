@@ -8,11 +8,11 @@ Created on 2018-04-24
 """
 
 import numpy as np
-#import matplotlib.pyplot as plt
 from . import sim_data
 from .sim_data import Sim_data
 from ..attitude import attitude
 from ..kml_gen import kml_gen
+from ..geoparams import geoparams
 
 class InsDataMgr(object):
     '''
@@ -73,7 +73,7 @@ class InsDataMgr(object):
         self.gps_visibility = Sim_data(name='gps_visibility',\
                                        description='GPS visibility')
         self.ref_pos = Sim_data(name='ref_pos',\
-                                description='true pos in the navigation frame',\
+                                description='true LLA pos in the navigation frame',\
                                 units=['rad', 'rad', 'm'],\
                                 output_units=['deg', 'deg', 'm'],\
                                 legend=['ref_pos_lat', 'ref_pos_lon', 'ref_pos_alt'])
@@ -90,23 +90,23 @@ class InsDataMgr(object):
                                      description='true attitude (quaternion)',\
                                      legend=['q0', 'q1', 'q2', 'q3'])
         self.ref_gyro = Sim_data(name='ref_gyro',\
-                                 description='true angular velocity',\
+                                 description='true angular velocity in the body frame',\
                                  units=['rad/s', 'rad/s', 'rad/s'],\
                                  output_units=['deg/s', 'deg/s', 'deg/s'],\
                                  legend=['ref_gyro_x', 'ref_gyro_y', 'ref_gyro_z'])
         self.ref_accel = Sim_data(name='ref_accel',\
-                                  description='True accel',\
+                                  description='true accel in the body frame',\
                                   units=['m/s^2', 'm/s^2', 'm/s^2'],\
                                   legend=['ref_accel_x', 'ref_accel_y', 'ref_accel_z'])
         self.ref_gps = Sim_data(name='ref_gps',\
-                                description='true GPS pos/vel',\
+                                description='true GPS LLA position and NED velocity',\
                                 units=['rad', 'rad', 'm', 'm/s', 'm/s', 'm/s'],\
                                 output_units=['deg', 'deg', 'm', 'm/s', 'm/s', 'm/s'],\
                                 legend=['ref_gps_lat', 'ref_gps_lon', 'ref_gps_alt',\
                                         'ref_gps_vN', 'ref_gps_vE', 'ref_gps_vD'])
                                 # downsampled true pos/vel
         self.ref_mag = Sim_data(name='ref_mag',\
-                                description='true magnetic field',\
+                                description='true magnetic field in the body frame',\
                                 units=['uT', 'uT', 'uT'],\
                                 legend=['ref_mag_x', 'ref_mag_y', 'ref_mag_z'])
         # sensor measurements
@@ -120,7 +120,7 @@ class InsDataMgr(object):
                               units=['m/s^2', 'm/s^2', 'm/s^2'],\
                               legend=['accel_x', 'accel_y', 'accel_z'])
         self.gps = Sim_data(name='gps',\
-                            description='GPS measurements',\
+                            description='GPS LLA position and NED velocity measurements',\
                             units=['rad', 'rad', 'm', 'm/s', 'm/s', 'm/s'],\
                             output_units=['deg', 'deg', 'm', 'm/s', 'm/s', 'm/s'],\
                             legend=['gps_lat', 'gps_lon', 'gps_alt',\
@@ -194,7 +194,8 @@ class InsDataMgr(object):
                                  legend=['AD_ax', 'AD_ay', 'AD_az'])
         # if using virtual inertial frame
         if self.ref_frame.data == 1:
-            # position units and legned
+            # description, position units and legned
+            self.ref_pos.description = 'true position in the local NED frame'
             self.ref_pos.units = ['m', 'm', 'm']
             self.ref_pos.output_units = ['m', 'm', 'm']
             self.ref_pos.legend = ['ref_pos_x', 'ref_pos_y', 'ref_pos_z']
@@ -205,10 +206,12 @@ class InsDataMgr(object):
             self.ref_vel.legend = ['ref_vel_x', 'ref_vel_y', 'ref_vel_z']
             self.vel.legend = ['vel_x', 'vel_y', 'vel_z']
             # GPS units and legend
+            self.ref_gps.description = 'true GPS position and velocity in the local NED frame'
             self.ref_gps.units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
             self.ref_gps.output_units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
             self.ref_gps.legend = ['ref_gps_x', 'ref_gps_y', 'ref_gps_z',\
                                    'ref_gps_vx', 'ref_gps_vy', 'ref_gps_vz']
+            self.gps.description = 'GPS position and velocity measurements in the local NED frame'
             self.gps.units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
             self.gps.output_units = ['m', 'm', 'm', 'm/s', 'm/s', 'm/s']
             self.gps.legend = ['gps_x', 'gps_y', 'gps_z',\
@@ -280,6 +283,8 @@ class InsDataMgr(object):
                            self.ref_att_quat.name: [self.ref_att_euler, self.__quat2euler_zyx],
                            self.att_euler.name: [self.att_quat, self.__euler2quat_zyx],
                            self.att_quat.name: [self.att_euler, self.__quat2euler_zyx]}
+        # error info, self.get_error_stat() and self.plot() will both update error info
+        self.__err = {}
 
     def add_data(self, data_name, data, key=None, units=None):
         '''
@@ -300,7 +305,7 @@ class InsDataMgr(object):
                 If data is a numpy of size(m,n), units should be a list of n strings
                 to define the units.
                 If data is a dict, units should be the same as the above two depending on if
-                each value in the dict is a scalr or a numpy array.
+                each value in the dict is a scalar or a numpy array.
         '''
         if data_name in self.__all:
             self.__all[data_name].add_data(data, key, units)
@@ -321,11 +326,12 @@ class InsDataMgr(object):
             else:
                 raise ValueError("Unsupported algorithm output: %s."% i)
 
-    def get_data(self, data_names, uploadFun = None):
+    def get_data(self, data_names,uploadFun = None):
         '''
         Get data section of data_names.
         Args:
             data_names: a list of data names
+        update by kevin --
         Returns:
             data: a list of data corresponding to data_names.
             If there is any unavailable data in data_names, return None
@@ -350,7 +356,8 @@ class InsDataMgr(object):
         else:
             return None
 
-    def get_error_stat(self, data_name, end_point=False, angle=False, use_output_units=False):
+    def get_error_stat(self, data_name, end_point=False, angle=False, use_output_units=False,\
+                       extra_opt=''):
         '''
         Get error statistics of data_name.
         Args:
@@ -370,29 +377,150 @@ class InsDataMgr(object):
                 [-pi, pi] before calculating statistics.
             use_output_units: use output units instead of inner units in which the data are
                 stored. An automatic unit conversion is done.
+            extra_opt: A string option to calculate errors. The following options are supported:
+                'ned': NED position error
         Returns:
             err_stat: error statistics.
         '''
         err_stat = None
+        # is this set of data available?
+        if data_name not in self.available:
+            print('__process_error_stat: %s is not available.'% data_name)
+            return None
+        # is the reference of data_name available?
+        ref_data_name = 'ref_' + data_name
+        if ref_data_name not in self.available:
+            print('%s has no reference.'% data_name)
+            return None
+        # calculate error
+        err_data_name = 'err_' + data_name
+        if err_data_name not in self.__err:
+            data_err = self.calc_data_err(data_name, ref_data_name, angle, extra_opt)
+            if data_err is not None:
+                self.__err[data_err.name] = data_err
         if end_point is True:
             # end-point error
-            err_stat = self.__end_point_error_stat(data_name, angle)
+            err_stat = self.__end_point_error_stat(data_name)
         else:
             # process error
-            err_stat = self.__process_error_stat(data_name, angle)
+            err_stat = self.__process_error_stat(data_name)
         # unit conversion
         if use_output_units and (err_stat is not None):
             for i in err_stat:
                 if isinstance(err_stat[i], dict):
                     for j in err_stat[i]:
-                        err_stat[i][j] = sim_data.convert_unit(err_stat[i][j],\
-                                                               self.__all[data_name].units,\
-                                                               self.__all[data_name].output_units)
+                        err_stat[i][j] = \
+                            sim_data.convert_unit(err_stat[i][j],\
+                                                  self.__err[err_data_name].units,\
+                                                  self.__err[err_data_name].output_units)
                 else:
-                    err_stat[i] = sim_data.convert_unit(err_stat[i],\
-                                                        self.__all[data_name].units,\
-                                                        self.__all[data_name].output_units)
+                    err_stat[i] = \
+                            sim_data.convert_unit(err_stat[i],\
+                                                  self.__err[err_data_name].units,\
+                                                  self.__err[err_data_name].output_units)
+        err_stat['units'] = str(self.__err[err_data_name].output_units)
         return err_stat
+
+    def calc_data_err(self, data_name, ref_data_name, angle=False, err_opt=''):
+        '''
+        Calculate error of one set of data.
+        Args:
+            data_name: name of the intput data
+            ref_data_name: name of the reference of the intput data
+            angle: True if this is angle error. Angle error will be converted to be within
+                [-pi, pi] before calculating statistics.
+            err_opt: error options
+        Returns:
+            an Sim_data object corresponds to data_name
+        '''
+        err = Sim_data(name='err_'+data_name,\
+                       description='ERROR of '+self.__all[data_name].description,\
+                       units=self.__all[data_name].units,\
+                       output_units=self.__all[data_name].output_units,\
+                       plottable=self.__all[data_name].plottable,\
+                       logx=self.__all[data_name].logx, logy=self.__all[data_name].logy,\
+                       grid=self.__all[data_name].grid,\
+                       legend=self.__all[data_name].legend)
+        # handling position error
+        lla = 0
+        if data_name == self.pos.name and self.ref_frame.data == 0:
+            if err_opt == 'ned':
+                lla = 1
+                err.description = 'ERROR of NED position'
+                err.units = ['m', 'm', 'm']
+                err.output_units = ['m', 'm', 'm']
+                err.legend = ['pos_N', 'pos_E', 'pos_D']
+            elif err_opt == 'ecef':
+                lla = 2
+                err.description = 'ERROR of ECEF position'
+                err.units = ['m', 'm', 'm']
+                err.output_units = ['m', 'm', 'm']
+                err.legend = ['pos_x', 'pos_y', 'pos_z']
+        if isinstance(self.__all[data_name].data, dict):
+            ref_data = None
+            for i in self.__all[data_name].data:
+                # get raw reference data for first key in the dict, use reference from last
+                # step for other keys to avoid multiple interps.
+                if ref_data is None:
+                    # use copy to avoid changing data if interp
+                    ref_data = self.__all[ref_data_name].data.copy()
+                # Interpolation. using ref_data to avoid multiple interps
+                if ref_data.shape[0] != self.__all[data_name].data[i].shape[0]:
+                    # print("%s has different number of samples from its reference."% data_name)
+                    # print('Interpolation needed.')
+                    if self.algo_time.name in self.available and self.time.name in self.available:
+                        ref_data = self.__interp(self.algo_time.data[i],\
+                                                 self.time.data, self.__all[ref_data_name].data)
+                    else:
+                        print("%s or %s is not available."% (self.algo_time.name, self.time.name))
+                        return None
+                # error stat
+                err.data[i] = self.array_error(self.__all[data_name].data[i], ref_data, angle, lla)
+        elif isinstance(self.__all[data_name].data, np.ndarray):
+            ref_data = self.__all[ref_data_name].data.copy()
+            # Interpolation
+            if ref_data.shape[0] != self.__all[data_name].data.shape[0]:
+                print("%s has different number of samples from its reference."% data_name)
+                print('Interpolation needed.')
+                if self.algo_time.name in self.available and self.time.name in self.available:
+                    ref_data = self.__interp(self.algo_time.data, self.time.data, ref_data)
+                else:
+                    print("%s or %s is not available."% (self.algo_time.name, self.time.name))
+                    return None
+            # error stat
+            err.data = self.array_error(self.__all[data_name].data, ref_data, angle, lla)
+        return err
+
+    def array_error(self, x, r, angle=False, lla=0):
+        '''
+        Calculate the error of an array w.r.t its reference.
+        Args:
+            x: input data, numpy array.
+            r: reference data, same size as x.
+            angle: True if x contains angles, False if not.
+            pos: 0 if x is not in LLA form;
+                 1 if x is in LLA form, and NED error is required;
+                 >=2 if x is in LLA form, and ECEF error is required.
+        Returns:
+            err: error
+        '''
+        if lla == 0:
+            err = x - r
+            if angle:
+                for j in range(len(err.flat)):
+                    err.flat[j] = attitude.angle_range_pi(err.flat[j])
+        else:
+            # convert x and r to ECEF first
+            x_ecef = geoparams.lla2ecef_batch(x)
+            r_ecef = geoparams.lla2ecef_batch(r)
+            err = x_ecef - r_ecef
+            # convert ecef err to NED err
+            if lla == 1:
+                n = err.shape[0]
+                for i in range(0, n):
+                    c_ne = attitude.ecef_to_ned(r[i, 0], r[i, 1])
+                    err[i, :] = c_ne.dot(err[i, :])
+        return err
 
     def save_data(self, data_dir):
         '''
@@ -410,7 +538,7 @@ class InsDataMgr(object):
                 data_saved.append(data)
         return data_saved
 
-    def plot(self, what_to_plot, keys, opt=None, extra_opt=''):
+    def plot(self, what_to_plot, keys, angle=False, opt=None, extra_opt=''):
         '''
         Plot specified results.
         Args:
@@ -426,7 +554,7 @@ class InsDataMgr(object):
         '''
         if what_to_plot in self.available:
             # get plot options
-            ref = None
+            ref_data_name = None
             plot3d = 0
             # this data has plot options?
             if isinstance(opt, dict):
@@ -437,10 +565,9 @@ class InsDataMgr(object):
                         plot3d = 2
                     elif opt[what_to_plot].lower() == 'error':
                         # this data have reference, error can be calculated
-                        ref_name = 'ref_' + what_to_plot
-                        if ref_name in self.available:
-                            ref = self.__all[ref_name]
-                        else:
+                        ref_data_name = 'ref_' + what_to_plot
+                        if ref_data_name not in self.available:
+                            ref_data_name = None
                             print(what_to_plot + ' has no reference.')
             # default x axis data
             x_axis = self.time
@@ -451,62 +578,22 @@ class InsDataMgr(object):
             elif what_to_plot in self.__algo_output and self.algo_time.name in self.available:
                 x_axis = self.algo_time
             # plot
-            # if data in what_to_plot and data in ref have different dimension, interp is needed.
-            if ref is not None:
-                # create tmp_ref in order not to change ref
-                tmp_ref = Sim_data(name=ref.name,\
-                                   description=ref.description,\
-                                   units=ref.units,\
-                                   output_units=ref.output_units,\
-                                   plottable=ref.plottable,\
-                                   logx=ref.logx, logy=ref.logy,\
-                                   grid=ref.grid,\
-                                   legend=ref.legend)
-                # interp data in ref to tmp_ref if needed
-                if isinstance(self.__all[what_to_plot].data, dict):
-                    last_key = None     # key of last interp data
-                    for i in self.__all[what_to_plot].data:
-                        # ref.data cannot be a dict, only one ref for each data is allowed
-                        # data in what_to_plot can have different samples for different keys
-                        # so each key should have its own reference data
-                        if ref.data.shape[0] != self.__all[what_to_plot].data[i].shape[0]:
-                            # if last interp dimension is the same, do not need same interp
-                            if last_key is not None:
-                                if tmp_ref.data[last_key].shape[0] ==\
-                                    self.__all[what_to_plot].data[i].shape[0]:
-                                    # print('using results from last interp')
-                                    tmp_ref.data[i] = tmp_ref.data[last_key]
-                                    continue
-                            # interp
-                            if self.algo_time.name in self.available and\
-                                self.time.name in self.available:
-                                tmp_ref.data[i] = self.__interp(self.algo_time.data[i],\
-                                                                self.time.data, ref.data)
-                                last_key = i
-                            # no algo_time or time vars for interp, no error plot is available
-                            else:
-                                print('need interp for %s, but cannot do that.'% what_to_plot)
-                                tmp_ref = None
-                                break
-                        else:
-                            tmp_ref.data[i] = ref.data
-                elif isinstance(self.__all[what_to_plot].data, np.ndarray):
-                    if ref.data.shape[0] != self.__all[what_to_plot].data[i].shape[0]:
-                        if self.algo_time.name in self.available and\
-                            self.time.name in self.available:
-                            tmp_ref.data[i] = self.__interp(self.algo_time.data[i],\
-                                                            self.time.data, ref.data)
-                        else:
-                            tmp_ref = None
-                    else:
-                        tmp_ref.data[i] = ref.data
-                else:# this is impossible
-                    tmp_ref.data = ref.data
-                self.__all[what_to_plot].plot(x_axis, key=keys, ref=tmp_ref,\
-                                              plot3d=plot3d, extra_opt=extra_opt)
+            if ref_data_name is not None:
+                err_data_name = 'err_' + what_to_plot
+                # error data not generated yet, generate it
+                if err_data_name not in self.__err:
+                    data_err = self.calc_data_err(what_to_plot, ref_data_name, angle=angle)
+                    if data_err is not None:
+                        self.__err[data_err.name] = data_err
+                # error data generated, plot it
+                if err_data_name in self.__err:
+                    self.__err[err_data_name].plot(x_axis, key=keys,\
+                                                   plot3d=plot3d, mpl_opt=extra_opt)
+                else:
+                    print('Cannot get error data of %s'% what_to_plot)
             else:
-                self.__all[what_to_plot].plot(x_axis, key=keys, ref=None,\
-                                              plot3d=plot3d, extra_opt=extra_opt)
+                self.__all[what_to_plot].plot(x_axis, key=keys,\
+                                              plot3d=plot3d, mpl_opt=extra_opt)
         else:
             print('Unsupported plot: %s.'% what_to_plot)
             # print("Only the following data are available for plot:")
@@ -543,105 +630,64 @@ class InsDataMgr(object):
         '''
         return data_name in self.__all.keys()
 
-    def __end_point_error_stat(self, data_name, angle=False):
+    def __end_point_error_stat(self, data_name):
         '''
         end-point error statistics
         '''
-        if data_name not in self.available:
+        # error available?
+        err_data_name = 'err_' + data_name
+        if err_data_name not in self.__err:
             print('__end_point_error_stat: %s is not available.'% data_name)
-            return None
-        ref_data_name = 'ref_' + data_name
-        if ref_data_name not in self.available:
-            print('%s has no reference.'% data_name)
-            return None
-        if isinstance(self.__all[data_name].data, dict):
+        if isinstance(self.__err[err_data_name].data, dict):
             # a dict contains data of multiple runs
             err = []
-            for i in self.__all[data_name].data:
-                err.append(self.__all[data_name].data[i][-1, :] -\
-                           self.__all[ref_data_name].data[-1, :])
+            for i in self.__err[err_data_name].data:
+                err.append(self.__err[err_data_name].data[i][-1, :])
             # convert list to np.array
             err = np.array(err)
-            return self.__array_stat(err, angle)
-        elif isinstance(self.__all[data_name].data, np.ndarray):
-            err = self.__all[data_name].data[-1, :] - self.__all[ref_data_name].data[-1, :]
-            return self.__array_stat(err, angle)
+            return self.__array_stat(err)
+        elif isinstance(self.__err[err_data_name].data, np.ndarray):
+            err = self.__err[err_data_name].data[-1, :]
+            return self.__array_stat(err)
         else:
             print('Unsupported data type to calculate error statitics for %s'% data_name)
             return None
 
-    def __process_error_stat(self, data_name, angle=False):
+    def __process_error_stat(self, data_name):
         '''
         process error statistics
         '''
-        # data_name is available
-        if data_name not in self.available:
-            print('__process_error_stat: %s is not available.'% data_name)
-            return None
-        # reference of data_name is available
-        ref_data_name = 'ref_' + data_name
-        if ref_data_name not in self.available:
-            print('%s has no reference.'% data_name)
-            return None
+        # error available?
+        err_data_name = 'err_' + data_name
+        if err_data_name not in self.__err:
+            print('__end_point_error_stat: %s is not available.'% data_name)
         # begin to calculate error stat
         if isinstance(self.__all[data_name].data, dict):
             stat = {'max': {}, 'avg': {}, 'std': {}}
-            ref_data = None
             for i in self.__all[data_name].data:
-                # get raw reference data for first key in the dict, use reference from last
-                # step for other keys to avoid multiple interps.
-                if ref_data is None:
-                    # use copy to avoid changing data if interp
-                    ref_data = self.__all[ref_data_name].data.copy()
-                # Interpolation. using ref_data to avoid multiple interps
-                if ref_data.shape[0] != self.__all[data_name].data[i].shape[0]:
-                    # print("%s has different number of samples from its reference."% data_name)
-                    # print('Interpolation needed.')
-                    if self.algo_time.name in self.available and self.time.name in self.available:
-                        ref_data = self.__interp(self.algo_time.data[i],\
-                                                 self.time.data, self.__all[ref_data_name].data)
-                    else:
-                        print("%s or %s is not available."% (self.algo_time.name, self.time.name))
-                        return None
                 # error stat
-                err = self.__all[data_name].data[i] - ref_data
-                tmp = self.__array_stat(err, angle)
+                err = self.__err[err_data_name].data[i]
+                tmp = self.__array_stat(err)
                 stat['max'][i] = tmp['max']
                 stat['avg'][i] = tmp['avg']
                 stat['std'][i] = tmp['std']
             return stat
         elif isinstance(self.__all[data_name].data, np.ndarray):
-            ref_data = self.__all[ref_data_name].data.copy()
-            # Interpolation
-            if ref_data.shape[0] != self.__all[data_name].data.shape[0]:
-                print("%s has different number of samples from its reference."% data_name)
-                print('Interpolation needed.')
-                if self.algo_time.name in self.available and self.time.name in self.available:
-                    ref_data = self.__interp(self.algo_time.data, self.time.data, ref_data)
-                else:
-                    print("%s or %s is not available."% (self.algo_time.name, self.time.name))
-                    return None
             # error stat
-            err = self.__all[data_name].data - ref_data
-            return self.__array_stat(err, angle)
+            err = self.__err[err_data_name].data
+            return self.__array_stat(err)
         else:
             print('Unsupported data type to calculate error statitics for %s'% data_name)
             return None
 
-    def __array_stat(self, x, angle=False):
+    def __array_stat(self, x):
         '''
         statistics of array x.
         Args:
             x is a numpy array of size (m,n) or (m,). m is number of sample. n is its dimension.
-            angle: True if this is angle error. Angle error will be converted to be within
-                [-pi, pi] before calculating statistics.
         Returns:
             {'max':, 'avg':, 'std': }
         '''
-        # convert angle error to be within [-pi, pi] if necessary
-        if angle is True:
-            for i in range(len(x.flat)):
-                x.flat[i] = attitude.angle_range_pi(x.flat[i])
         # statistics
         return {'max': np.max(np.abs(x), 0),\
                 'avg': np.average(x, 0),\

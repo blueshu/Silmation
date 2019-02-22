@@ -18,8 +18,8 @@ from .ins_algo_manager import InsAlgoMgr
 from .sim_data_upload import DataUpload
 from ..pathgen import pathgen
 from .. attitude import attitude
+from ..geoparams import geoparams
 
-D2R = math.pi/180.0
 # built-in mobility
 high_mobility = np.array([1.0, 0.5, 2.0])   # m/s/s, rad/s/s, rad/s
 
@@ -47,7 +47,8 @@ class Sim(object):
                 row 2: initial states, which include:
                     col 1-3: initial position (LLA, deg, meter),
                     col 4-6: initial velocity in body frame(m/s),
-                    col 7-9: initial attitude (Euler angles, deg)
+                    col 7-9: initial attitude (Euler angles that rotate the reference frame to the
+                        body frame according to the ZYX rotation sequence, deg).
                 row 3: header line for motion command
                 row >=2: motion commands, which include
                     col 1: motion type. The following types are supported:
@@ -57,7 +58,7 @@ class Sim(object):
                         4: absolute att, relative vel.
                         5: relative att, absolute vel.
                     col 2-7: motion command (deg, m/s).
-                        [yaw, pitch, roll, vx (velocity along body x axis), reserved, reserved].
+                        [yaw, pitch, roll, vx (velocity along body x axis), vy, vz].
                         For motion type 1, the above Euler angles and velocity should be
                         change rate, corresponding units are (deg/s, m/s/s).
                     col 8: maximum time for the given segment, sec. Max time together with the
@@ -67,14 +68,15 @@ class Sim(object):
                         command cannot be finished within max time, the next command will be
                         executed after max time. If you want to fully control execution time by
                         your own, you should always choose motion type to be 1.
-                    col 9: reserved.
+                    col 9: gps visibility, should be 1 or 0.
 
             ref_frame: reference frame used as the navigation frame and the attitude reference.
                         0: NED (default), with x axis pointing along geographic north,
                            y axis pointing eastward,
                            z axis pointing downward.
-                           Position will be expressed in LLA form, and the velocity of the vehicle
-                           relative to the ECEF frame will be expressed in local NED frame.
+                           Position will be expressed in LLA form, and the reference velocity of
+                           the vehicle relative to the ECEF frame will be expressed in the body
+                           frame, and GPS velocity will be expressed in the NED frame.
                         1: a virtual inertial frame with constant g,
                            x axis pointing along geographic/magnetic north,
                            z axis pointing along g,
@@ -84,7 +86,7 @@ class Sim(object):
                            the initial position in ecef and the relative position in the virutal
                            inertial frame. Indeed, two vectors expressed in different frames should
                            not be added. This is done in this way here just to preserve all useful
-                           information to generate .kml files. 
+                           information to generate .kml files.
                            Keep this in mind if you use this result.
 
             imu: Define the IMU error model. See IMU in imu_model.py.
@@ -134,12 +136,14 @@ class Sim(object):
 
         # algorithm manager
         self.amgr = InsAlgoMgr(algorithm)
-        # associated data mapping
+
+        # associated data mapping. this is a dict in the following form:
+        #   {'dst_name': ['src_name', routine_convert_src_to_dst]}
         self.data_map = {\
-            self.dmgr.ref_att_euler.name: [self.dmgr.ref_att_quat.name, self.__euler2quat_zyx],
-            self.dmgr.ref_att_quat.name: [self.dmgr.ref_att_euler.name, self.__quat2euler_zyx],
-            self.dmgr.att_euler.name: [self.dmgr.att_quat.name, self.__euler2quat_zyx],
-            self.dmgr.att_quat.name: [self.dmgr.att_euler.name, self.__quat2euler_zyx]}
+            self.dmgr.ref_att_euler.name: [self.dmgr.ref_att_quat.name, self.__quat2euler_zyx],
+            self.dmgr.ref_att_quat.name: [self.dmgr.ref_att_euler.name, self.__euler2quat_zyx],
+            self.dmgr.att_euler.name: [self.dmgr.att_quat.name, self.__quat2euler_zyx],
+            self.dmgr.att_quat.name: [self.dmgr.att_euler.name, self.__euler2quat_zyx]}
 
         # error terms we are interested in
         self.interested_error = {self.dmgr.att_euler.name: 'angle',
@@ -182,7 +186,7 @@ class Sim(object):
         # simulation complete successfully
         self.sim_complete = True
 
-    def results(self, data_dir=None, end_point=False, gen_kml=False,update_flag=False):
+    def results(self, data_dir=None, end_point=False, gen_kml=False,update_flag=False,extra_opt=''):
         '''
         Simulation results.
         Save results to .csv files containing all data generated.
@@ -204,6 +208,9 @@ class Sim(object):
             end_point: True for end-point error statistics, False for process error statistics.
             gen_kml: True to generate two .kml files containing the reference position and the
                     simulation position (output by algorithms), respectively.
+            extra_opt: Extra options to generate the results. It can be a string option to
+                calculate errors. The following options are supported:
+                    'ned': NED position error.
         Returns: a dict contains all simulation results.
         '''
         if self.sim_complete:
@@ -226,7 +233,7 @@ class Sim(object):
                 self.dmgr.save_kml_files(data_dir)
 
             #### simulation summary and save summary to file
-            self.__online_summary(data_dir, data_saved, end_point=end_point)  # generate summary
+            self.__online_summary(data_dir, data_saved, end_point=end_point,extra_opt=extra_opt)  # generate summary
             
             if update_flag is True:
                 if data_dir is not None:
@@ -283,26 +290,31 @@ class Sim(object):
         # generate keys to index simulation data
         for data in what_to_plot:
             # generate keys for this var, only algo output has algo name in keys
-            if data in self.amgr.output or\
-               (data in self.data_map and self.data_map[data][0] in self.amgr.output):
+            data_from_algo = self.__data_from_algo_output(data)
+            if any(data_from_algo):
                 keys = []
                 for i in range(self.amgr.nalgo):
                     # results from different algorithms are indexed by algo_name and simulation runs
-                    # this output is not generated by this algo
-                    if data not in self.amgr.algo[i].output:
+                    # this result is not generated by this algo and this result is not associated
+                    #   with any output of this algo
+                    if data_from_algo[i]:
+                        # this is output is generated by this algo
+                        algo_name = self.amgr.get_algo_name(i)
+                        for j in range(len(sim_idx)):
+                            keys.append(algo_name+'_'+str(j))
+                    else:
                         continue
-                    # this is output is generated by this algo
-                    algo_name = self.amgr.get_algo_name(i)
-                    for j in range(len(sim_idx)):
-                        keys.append(algo_name+'_'+str(j))
             else:
                 keys = sim_idx
             # plot data
-            self.dmgr.plot(data, keys, opt, extra_opt)
+            is_angle = False
+            if data in self.interested_error:
+                is_angle = self.interested_error[data] == 'angle'
+            self.dmgr.plot(data, keys, is_angle, opt, extra_opt)
         # show figures
         plt.show()
 
-    def __online_summary(self, data_dir, data_saved, end_point=False):
+    def __online_summary(self, data_dir, data_saved, end_point=False, extra_opt=''):
         '''
         Summary of sim results.
         '''
@@ -337,7 +349,8 @@ class Sim(object):
                 continue
             is_angle = self.interested_error[data_name] == 'angle'
             err_stat = self.dmgr.get_error_stat(data_name, end_point=end_point,\
-                                                angle=is_angle, use_output_units=True)
+                                                angle=is_angle, use_output_units=True,\
+                                                extra_opt=extra_opt)
             if err_stat is not None:
                 if err_stat_header_line is False:
                     err_stat_header_line = True
@@ -469,6 +482,9 @@ class Sim(object):
                 data = np.genfromtxt(full_file_name, delimiter=',', skip_header=1)
                 # get data units in file
                 units = self.__get_data_units(full_file_name)
+                # see if position info mathes reference frame
+                if data_name == self.dmgr.ref_pos.name or data_name == self.dmgr.pos.name:
+                    data, units = self.__convert_pos(data, units, self.dmgr.ref_frame.data)
                 # print([data_name, data_key, units])
                 self.dmgr.add_data(data_name, data, data_key, units)
 
@@ -537,15 +553,15 @@ class Sim(object):
         ini_state = np.array(json.loads(self.data.initState, object_hook=JSONObject),dtype='float')
         waypoints = np.array(json.loads(self.data.motionCommand, object_hook=JSONObject),dtype='float')
         ini_pos_n = ini_state[0:3]
-        ini_pos_n[0] = ini_pos_n[0] * D2R
-        ini_pos_n[1] = ini_pos_n[1] * D2R
+        ini_pos_n[0] = ini_pos_n[0] * attitude.D2R
+        ini_pos_n[1] = ini_pos_n[1] * attitude.D2R
         ini_vel_b = ini_state[3:6]
-        ini_att = ini_state[6:9] * D2R
+        ini_att = ini_state[6:9] * attitude.D2R
         if waypoints.ndim == 1: # if waypoints is of size (n,), change it to (1,n)
             waypoints = waypoints.reshape((1, len(waypoints)))
         motion_def = waypoints[:, [0, 1, 2, 3, 4, 5, 6, 7, 8]]
         # convert deg to rad
-        motion_def[:, 1:4] = motion_def[:, 1:4] * D2R
+        motion_def[:, 1:4] = motion_def[:, 1:4] * attitude.D2R
         # replace nan with 0.0, doing this to be compatible with older version motion def files.
         motion_def[np.isnan(motion_def)] = 0.0
 
@@ -668,15 +684,15 @@ class Sim(object):
             raise ValueError('motion definition file must have nine columns \
                               and at least four rows (two header rows + at least two data rows).')
         ini_pos_n = ini_state[0:3]
-        ini_pos_n[0] = ini_pos_n[0] * D2R
-        ini_pos_n[1] = ini_pos_n[1] * D2R
+        ini_pos_n[0] = ini_pos_n[0] * attitude.D2R
+        ini_pos_n[1] = ini_pos_n[1] * attitude.D2R
         ini_vel_b = ini_state[3:6]
-        ini_att = ini_state[6:9] * D2R
+        ini_att = ini_state[6:9] * attitude.D2R
         if waypoints.ndim == 1: # if waypoints is of size (n,), change it to (1,n)
             waypoints = waypoints.reshape((1, len(waypoints)))
         motion_def = waypoints[:, [0, 1, 2, 3, 4, 5, 6, 7, 8]]
         # convert deg to rad
-        motion_def[:, 1:4] = motion_def[:, 1:4] * D2R
+        motion_def[:, 1:4] = motion_def[:, 1:4] * attitude.D2R
         # replace nan with 0.0, doing this to be compatible with older version motion def files.
         motion_def[np.isnan(motion_def)] = 0.0
 
@@ -702,8 +718,8 @@ class Sim(object):
             elif isinstance(mode, np.ndarray):      # customize the sim mode
                 if mode.shape == (3,):
                     mobility[0] = mode[0]
-                    mobility[1] = mode[1] * D2R
-                    mobility[2] = mode[2] * D2R
+                    mobility[1] = mode[1] * attitude.D2R
+                    mobility[2] = mode[2] * attitude.D2R
                 else:
                     raise TypeError('mode should be of size (3,)')
             else:
@@ -803,14 +819,17 @@ class Sim(object):
         For example, pathgen generates Euler angles, this procedure will calculate the
         coresponding quaternions and add those in self.res.
         '''
-        # search for data to add to results and generate associated data
         for i in self.data_map:
-            if i in self.dmgr.available and \
-                self.data_map[i][0] not in self.dmgr.available and\
-                self.dmgr.is_supported(self.data_map[i][0]):
-                self.dmgr.add_data(self.data_map[i][0],\
-                                   self.data_map[i][1](self.dmgr.get_data([i])[0])
-                                  )
+            # data available and its associated data are supported
+            src_name = self.data_map[i][0]
+            if src_name in self.dmgr.available and self.dmgr.is_supported(i):
+                src_data = self.dmgr.get_data([src_name])[0]
+                # src_data is a dict, add associated data of all keys
+                if isinstance(src_data, dict):
+                    for key in src_data:
+                        self.dmgr.add_data(i, self.data_map[i][1](src_data[key]), key)
+                else:
+                    self.dmgr.add_data(i, self.data_map[i][1](src_data))
 
     def __quat2euler_zyx(self, src):
         '''
@@ -858,3 +877,58 @@ class Sim(object):
         else:
             raise ValueError('%s is not a dict or numpy array.'% src.name)
 
+    def __data_from_algo_output(self, data_name):
+        '''
+        Check if data corresponding to data_name are from algo output or associated
+        data of algo output. For example, if an algo outputs quaternions, euler angles
+        can be calculated from quaternions accordig to self.data_map.
+        Args:
+            data_name: a string data name.
+        Returns: A list of True or False. Its length is equal to the number of algos.
+            True of false representing if this data of data_name are or can be 
+            calculated from the output of this algo.
+        '''
+        rtn = []
+        for i in range(self.amgr.nalgo):
+            algo_output = self.amgr.algo[i].output
+            rtn.append(data_name in algo_output or\
+                       data_name in self.data_map and self.data_map[data_name][0] in algo_output)
+        return rtn
+
+    def __convert_pos(self, data, units, ref_frame):
+        '''
+        Convert position data into a proper form.
+        For example, if units are [deg deg m] or [rad rad m] and ref_frame is 1, convertion
+        is needed. LLA form position will be converted to [x y z] form. Vice Versa.
+        Args:
+            data: nx3 numpy array, can be in [Lat Lon Alt] or [x y z] form.
+            units: units of the data.
+            ref_frame: reference frame of the simulation. 0:NED, 1:virtual inertial
+        Returns:
+            data: nx3 numpy array after convertion.
+            units: units of converted dta
+        '''
+        if ref_frame == 1:
+            # deg to rad
+            if units == ['deg', 'deg', 'm']:
+                units = ['rad', 'rad', 'm']
+                data[:, 0] = data[:, 0] * attitude.D2R
+                data[:, 1] = data[:, 1] * attitude.D2R
+            # lla2ned
+            if units == ['rad', 'rad', 'm']:
+                units = ['m', 'm', 'm']
+                # relative motion in ECEF
+                data = geoparams.lla2ecef_batch(data)
+                ini_pos_ecef = data[0, :]   # initial ECEF position
+                data = data - ini_pos_ecef
+                # relative motion in ECEF to NED, NED defined by first LLA
+                c_ne = attitude.ecef_to_ned(data[0, 0], data[0, 1])
+                data = data.dot(c_ne.T)
+                data = data + ini_pos_ecef
+        elif ref_frame == 0:
+            # ned2lla or ecef2lla
+            #  Because if the data are in NED or ECEF is unknown, this is not supported.
+            if units == ['m', 'm', 'm']:
+                units = ['rad', 'rad', 'm']
+                print("Unsupported position conversion from xyz to LLA.")
+        return data, units

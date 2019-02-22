@@ -34,7 +34,7 @@ def localTest():
         'ref_frame': 0,
         'userId': 143,
         #'algorithmName': 'Dmu380',
-        'algorithmName': 'INS',
+        'algorithmName': 'Allan',
         'algorithmRunTimes': 1,
         'algorithmParams': '0.5585053606381855,2.0943951023931953,0.0,10.0,0.0,0.0,1.5707963267948966,0.0,0.0',
         'algorithmStatistics': 'end-point',
@@ -43,7 +43,7 @@ def localTest():
     res = json.dumps(data)
     data1 = json.loads(res, object_hook=JSONObject)
     print data1
-    fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-' + str(data1.userId)
+    fileName = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime()) + '-local' + str(data1.userId)
     run_simulation(data1,fileName,res)
 
 def get_http_msg():
@@ -178,7 +178,7 @@ def run_simulation(data,fileName,request_body):
         sim.run(data.algorithmRunTimes)
         # generate simulation results, summary
         # do not save data since the simulation runs for 1000 times and generates too many results
-        sim.results(fileName,gen_kml= True,end_point=staticsFlag,update_flag=True)
+        sim.results(fileName,gen_kml= True,end_point=staticsFlag,update_flag=True,extra_opt='ned')
     
     elif data.algorithmName == 'VG':
         VGfs = 200.0          # IMU sample frequency
