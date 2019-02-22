@@ -352,14 +352,17 @@ class Sim(object):
                                                 angle=is_angle, use_output_units=True,\
                                                 extra_opt=extra_opt)
             if err_stat is not None:
+                # There is error stats, add a headerline
                 if err_stat_header_line is False:
                     err_stat_header_line = True
                     self.sum += '\n------------------------------------------------------------\n'
                     self.sum += 'The following are error statistics.'
+                # Units of the error stats
+                err_units = err_stat['units']
                 self.sum += '\n-----------statistics for ' +\
                             self.dmgr.get_data_all(data_name).description +\
                             ' (in units of ' +\
-                            self.dmgr.get_data_all(data_name).output_units[0] +')\n'
+                            err_units +')\n'
                 if isinstance(err_stat['max'], dict):
                     for sim_run in sorted(err_stat['max'].keys()):
                         self.sum += '\tSimulation run ' + str(sim_run) + ':\n'
